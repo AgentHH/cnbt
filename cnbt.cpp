@@ -108,8 +108,6 @@ struct tag_byte : tag {
             return 1;
         value = (int8_t)s.eat_byte();
 
-        printf("Constructed tag_byte with \"%s\", %d\n", name, value);
-
         return 0;
     }
 };
@@ -128,8 +126,6 @@ struct tag_short : tag {
         if (s.remain() < sizeof(uint16_t))
             return 1;
         value = (int16_t)s.eat_short();
-
-        printf("Constructed tag_short with \"%s\", %d\n", name, value);
 
         return 0;
     }
@@ -150,8 +146,6 @@ struct tag_int : tag {
             return 1;
         value = (int32_t)s.eat_int();
 
-        printf("Constructed tag_int with \"%s\", %d\n", name, value);
-
         return 0;
     }
 };
@@ -170,8 +164,6 @@ struct tag_long : tag {
         if (s.remain() < sizeof(uint64_t))
             return 1;
         value = (int64_t)s.eat_long();
-
-        printf("Constructed tag_long with \"%s\", %ld\n", name, value);
 
         return 0;
     }
@@ -192,8 +184,6 @@ struct tag_float : tag {
             return 1;
         value = s.eat_float();
 
-        printf("Constructed tag_float with \"%s\", %f\n", name, value);
-
         return 0;
     }
 };
@@ -213,8 +203,6 @@ struct tag_double : tag {
             return 1;
         value = s.eat_double();
 
-        printf("Constructed tag_double with \"%s\", %g\n", name, value);
-
         return 0;
     }
 };
@@ -231,8 +219,6 @@ struct tag_string : tag {
                 return 1;
         }
         value = s.eat_string();
-
-        printf("Constructed tag_string with \"%s\", \"%s\"\n", name, value);
 
         return 0;
     }
@@ -258,8 +244,6 @@ struct tag_byte_array : tag {
             return 1;
         value = (int8_t *)calloc(num, sizeof(int8_t));
         memcpy(value, temp, num * sizeof(int8_t));
-
-        printf("Constructed tag_byte_array with \"%s\", %d\n", name, num);
 
         return 0;
     }
@@ -415,88 +399,6 @@ int parse_tags(uint8_t *data, size_t len) {
     return ret;
 }
 
-// {{{ old parse_tags
-#if 0
-int parse_tags(uint8_t *data, size_t len) {
-    size_t pos;
-    std::stack<enum tagtype> s;
-    std::stack<uint32_t> arg;
-    enum tagtype cur;
-
-    s.push(TAG_Compound);
-
-    do {
-        cur = s.top();
-        if (cur == TAG_ANY) {
-            if (len < 1) {
-                ERR("Premature end of tags\n");
-                return 1;
-            }
-            cur = data[0];
-        }
-        switch(cur) {
-            case TAG_End:
-                break;
-            case TAG_Byte:
-                eat_tag(TAG_Byte);
-                s.push(TAG_String);
-                s.push(TAG_LITERAL); a.push(TAG_Byte);
-                break;
-            case TAG_Short:
-                eat_tag(TAG_Short);
-                s.push(TAG_String);
-                s.push(TAG_LITERAL); a.push(TAG_Short);
-                break;
-            case TAG_Int:
-                eat_tag(TAG_Int);
-                s.push(TAG_String);
-                s.push(TAG_LITERAL); a.push(TAG_Int);
-                break;
-            case TAG_Long:
-                eat_tag(TAG_Long);
-                s.push(TAG_String);
-                s.push(TAG_LITERAL); a.push(TAG_Long);
-                break;
-            case TAG_Float:
-                eat_tag(TAG_Float);
-                s.push(TAG_String);
-                s.push(TAG_LITERAL); a.push(TAG_Float);
-                break;
-            case TAG_Double:
-                eat_tag(TAG_Double);
-                s.push(TAG_String);
-                s.push(TAG_LITERAL); a.push(TAG_Double);
-                break;
-            case TAG_Byte_Array:
-                eat_tag(TAG_Byte_Array);
-                s.push(TAG_String);
-                s.push(TAG_Int);
-                s.push(TAG_LITERAL); a.push(TAG_Byte_Array);
-                break;
-            case TAG_String:
-                eat_tag(TAG_String);
-                s.push(TAG_String);
-                s.push(TAG_Short);
-                s.push(TAG_LITERAL); a.push(TAG_String);
-                break;
-            case TAG_List:
-                ERR("Unimplemented\n");
-                break;
-            case TAG_Compound:
-                eat_tag(TAG_Compound);
-                s.push(TAG_ANY);
-                break;
-            default:
-                ERR("Unknown tag %02x encountered; giving up\n", cur);
-                return 1;
-        }
-    } while ();
-
-
-    return 0;
-}
-#endif // }}}
-
 void examine_file(FILE *fp) {
     {
         uint8_t raw[BUFSIZE], data[BUFSIZE];
@@ -515,7 +417,7 @@ void examine_file(FILE *fp) {
         if (ret) {
             return;
         }
-        printf("Ate a %u byte file\n", (uint32_t)len);
+        //printf("Ate a %u byte file\n", (uint32_t)len);
         if (parse_tags(data, len)) {
             ERR("Tag parsing failed\n");
         }
