@@ -10,7 +10,7 @@
 #include <zlib.h>
 #include <arpa/inet.h>
 
-#include "constants.hpp"
+#include "nbtconstants.hpp"
 // }}}
 namespace cnbt {
 // {{{ evil hacks to support network floating point values

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <vector>
 
-#include "constants.hpp"
+#include "nbtconstants.hpp"
 #include "datastream.hpp"
 // }}}
 namespace cnbt {
