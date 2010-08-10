@@ -10,6 +10,12 @@ level::level(char *path) : path(path) {
 level::~level() {
     delete root;
 }
+int level::load_chunk_list() {
+    DIR *dir = opendir(path);
+    if (!dir) {
+        ERR("Unable to open directory \"%s\": %s\n", path, strerror(errno));
+    }
+}
 int level::load() {
     uint8_t raw[LEVEL_COMPRESSED_BUFFER_SIZE], data[LEVEL_UNCOMPRESSED_BUFFER_SIZE];
     size_t len;
