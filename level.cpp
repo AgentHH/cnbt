@@ -15,6 +15,10 @@ int level::load_chunk_list() {
     if (!dir) {
         ERR("Unable to open directory \"%s\": %s\n", path, strerror(errno));
     }
+
+    closedir(dir);
+
+    return 0;
 }
 int level::load() {
     size_t filepathlen = strlen(path) + 1 + sizeof(LEVEL_MAIN_FILE);

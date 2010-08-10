@@ -4,6 +4,10 @@
 
 namespace cnbt {
 // {{{ evil hacks to support network floating point values
+#define htonf(A...)  ntohf(A)
+#define htond(A...)  ntohd(A)
+#define htonll(A...) ntohll(A)
+
 float ntohf(float f) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     union {
@@ -137,6 +141,163 @@ uint8_t *stream_eater::eat_string() {
     uint8_t *ret = (uint8_t*)strndup((const char*)&buf[pos], s);
     pos += s * sizeof(uint8_t);
     return ret;
+}
+// }}}
+// {{{ stream writer to spit out new data
+stream_writer::stream_writer(uint8_t **extbuf) : extbuf(extbuf) {
+    pos = 0;
+    len = STREAM_WRITER_BUFSIZE;
+    buf = (uint8_t*)malloc(sizeof(uint8_t) * len);
+}
+stream_writer::~stream_writer() {
+    if (buf)
+        free(buf);
+}
+size_t stream_writer::written() {
+    return pos;
+}
+size_t stream_writer::remain() {
+    return len - pos;
+}
+int stream_writer::reallocate() {
+    len += STREAM_WRITER_BUFSIZE;
+    buf = (uint8_t*)realloc(buf, len);
+    if (!buf) {
+        ERR("Unable to reallocate output buffer in stream_writer\n");
+        return 1;
+    }
+    return 0;
+}
+
+int stream_writer::write_bool(uint8_t b) {
+    while (remain() < sizeof(uint8_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    buf[pos] = b;
+    pos += sizeof(uint8_t);
+
+    return 0;
+}
+int stream_writer::write_tag(enum tagtype t) {
+    while (remain() < sizeof(uint8_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    buf[pos] = (uint8_t)t;
+    pos += sizeof(uint8_t);
+
+    return 0;
+}
+int stream_writer::write_byte(uint8_t b) {
+    while (remain() < sizeof(uint8_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    buf[pos] = b;
+    pos += sizeof(uint8_t);
+
+    return 0;
+}
+int stream_writer::write_short(uint16_t s) {
+    while (remain() < sizeof(uint16_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    *(uint16_t*)&buf[pos] = htons(s);
+    pos += sizeof(uint16_t);
+
+    return 0;
+}
+int stream_writer::write_int(uint32_t i) {
+    while (remain() < sizeof(uint32_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    *(uint32_t*)&buf[pos] = htonl(i);
+    pos += sizeof(uint32_t);
+
+    return 0;
+}
+int stream_writer::write_long(uint64_t l) {
+    while (remain() < sizeof(uint64_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    *(uint64_t*)&buf[pos] = htonll(l);
+    pos += sizeof(uint64_t);
+
+    return 0;
+}
+int stream_writer::write_float(float f) {
+    while (remain() < sizeof(float)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    *(float*)&buf[pos] = htonf(f);
+    pos += sizeof(float);
+
+    return 0;
+}
+int stream_writer::write_double(double d) {
+    while (remain() < sizeof(double)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    *(double*)&buf[pos] = htond(d);
+    pos += sizeof(double);
+
+    return 0;
+}
+int stream_writer::write_byte_array(uint8_t *d, uint32_t l) {
+    while (remain() < l * sizeof(uint8_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    memcpy(&buf[pos], d, l * sizeof(uint8_t));
+    pos += l * sizeof(uint8_t);
+
+    return 0;
+}
+int stream_writer::write_short_array(uint16_t *d, uint32_t l) {
+    while (remain() < l * sizeof(uint16_t)) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    memcpy(&buf[pos], d, l * sizeof(uint16_t));
+    pos += l * sizeof(uint16_t);
+
+    return 0;
+}
+int stream_writer::write_string(uint8_t *s) {
+    if (s == NULL) {
+        s = (uint8_t *)"";
+    }
+    size_t l = strlen((const char *)s) * sizeof(uint8_t);
+    if (l >= (1 << (sizeof(uint16_t) * 8))) {
+        return 2;
+    }
+    while (remain() < sizeof(uint16_t) + l) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    *(uint16_t*)&buf[pos] = htons((uint16_t)l);
+    pos += sizeof(uint16_t);
+    memcpy(&buf[pos], s, l);
+    pos += l;
+
+    return 0;
 }
 // }}}
 // {{{ zlib helper function

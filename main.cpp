@@ -28,6 +28,21 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
         cnbt::print_tag_tree(t);
+
+        if (argc < 4) {
+            delete(t);
+            return 0;
+        }
+
+        uint8_t *buf;
+        cnbt::stream_writer w(&buf);
+        t->write(w, 1);
+        printf("wrote %u bytes to stream_writer\n", w.written());
+
+        FILE *fp = fopen(argv[3], "w");
+        fwrite(buf, sizeof(uint8_t), w.written(), fp);
+        fclose(fp);
+
         delete(t);
     } else {
         cnbt::level l(argv[1]);

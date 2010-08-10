@@ -13,12 +13,16 @@
 #include "nbtconstants.hpp"
 // }}}
 namespace cnbt {
+#define STREAM_WRITER_BUFSIZE 16384
 // {{{ evil hacks to support network floating point values
 float ntohf(float f);
 double ntohd(double d);
 uint64_t ntohll(uint64_t i);
+float htonf(float f);
+double htond(double d);
+uint64_t htonll(uint64_t i);
 // }}}
-// {{{ stream eater to simplify extracting data
+// {{{ stream classes to simplify extracting and writing data
 struct stream_eater {
     uint8_t *buf;
     size_t len, pos;
@@ -26,6 +30,7 @@ struct stream_eater {
     stream_eater(uint8_t *buf, size_t len);
     size_t remain();
     size_t eaten();
+
     uint8_t eat_bool();
     enum tagtype peek_tag();
     int eat_tag(enum tagtype t);
@@ -38,6 +43,29 @@ struct stream_eater {
     uint8_t *eat_byte_array(uint32_t l);
     uint16_t *eat_short_array(uint32_t l);
     uint8_t *eat_string();
+};
+struct stream_writer {
+    uint8_t *buf;
+    uint8_t **extbuf;
+    size_t len, pos;
+
+    stream_writer(uint8_t **buf);
+    ~stream_writer();
+    size_t written();
+    size_t remain();
+    int reallocate();
+
+    int write_bool(uint8_t b);
+    int write_tag(enum tagtype t);
+    int write_byte(uint8_t b);
+    int write_short(uint16_t s);
+    int write_int(uint32_t i);
+    int write_long(uint64_t l);
+    int write_float(float f);
+    int write_double(double d);
+    int write_byte_array(uint8_t *d, uint32_t l);
+    int write_short_array(uint16_t *d, uint32_t l);
+    int write_string(uint8_t *s);
 };
 // }}}
 // {{{ zlib helper function

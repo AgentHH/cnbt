@@ -8,14 +8,17 @@ namespace cnbt {
 // {{{ various classes representing each tag, as well as a recursive tag parser
 // class definitions are in header
 // {{{ end tag
-int tag_end::init(struct stream_eater &s, int named) {
+int tag_end::read(struct stream_eater &s, int named) {
     if (s.eat_tag(TAG_END))
         return 1;
     return 0;
 }
+int tag_end::write(struct stream_writer &s, int named) {
+    return s.write_tag(TAG_END);
+}
 // }}}
 // {{{ byte tag
-int tag_byte::init(struct stream_eater &s, int named) {
+int tag_byte::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_BYTE))
             return 1;
@@ -29,9 +32,17 @@ int tag_byte::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_byte::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_BYTE);
+        s.write_string(name);
+    }
+    s.write_byte(value);
+    return 0;
+}
 // }}}
 // {{{ short tag
-int tag_short::init(struct stream_eater &s, int named) {
+int tag_short::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_SHORT))
             return 1;
@@ -45,9 +56,17 @@ int tag_short::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_short::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_SHORT);
+        s.write_string(name);
+    }
+    s.write_short(value);
+    return 0;
+}
 // }}}
 // {{{ int tag
-int tag_int::init(struct stream_eater &s, int named) {
+int tag_int::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_INT))
             return 1;
@@ -61,9 +80,17 @@ int tag_int::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_int::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_INT);
+        s.write_string(name);
+    }
+    s.write_int(value);
+    return 0;
+}
 // }}}
 // {{{ long tag
-int tag_long::init(struct stream_eater &s, int named) {
+int tag_long::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_LONG))
             return 1;
@@ -77,9 +104,17 @@ int tag_long::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_long::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_LONG);
+        s.write_string(name);
+    }
+    s.write_long(value);
+    return 0;
+}
 // }}}
 // {{{ float tag
-int tag_float::init(struct stream_eater &s, int named) {
+int tag_float::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_FLOAT))
             return 1;
@@ -93,9 +128,17 @@ int tag_float::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_float::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_FLOAT);
+        s.write_string(name);
+    }
+    s.write_float(value);
+    return 0;
+}
 // }}}
 // {{{ double tag
-int tag_double::init(struct stream_eater &s, int named) {
+int tag_double::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_DOUBLE))
             return 1;
@@ -109,9 +152,17 @@ int tag_double::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_double::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_DOUBLE);
+        s.write_string(name);
+    }
+    s.write_double(value);
+    return 0;
+}
 // }}}
 // {{{ string tag
-int tag_string::init(struct stream_eater &s, int named) {
+int tag_string::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_STRING))
             return 1;
@@ -123,6 +174,14 @@ int tag_string::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_string::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_STRING);
+        s.write_string(name);
+    }
+    s.write_string(value);
+    return 0;
+}
 
 tag_string::~tag_string() {
     if (value)
@@ -130,7 +189,7 @@ tag_string::~tag_string() {
 }
 // }}}
 // {{{ byte array tag
-int tag_byte_array::init(struct stream_eater &s, int named) {
+int tag_byte_array::read(struct stream_eater &s, int named) {
     if (named) {
         if (s.eat_tag(TAG_BYTE_ARRAY))
             return 1;
@@ -149,6 +208,14 @@ int tag_byte_array::init(struct stream_eater &s, int named) {
 
     return 0;
 }
+int tag_byte_array::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_BYTE_ARRAY);
+        s.write_string(name);
+    }
+    s.write_byte_array((uint8_t*)value, num);
+    return 0;
+}
 
 tag_byte_array::~tag_byte_array() {
     if (value)
@@ -156,7 +223,7 @@ tag_byte_array::~tag_byte_array() {
 }
 // }}}
 // {{{ list tag
-int tag_list::init(struct stream_eater &s, int named) {
+int tag_list::read(struct stream_eater &s, int named) {
         struct tag *t;
 
         if (named) {
@@ -167,13 +234,13 @@ int tag_list::init(struct stream_eater &s, int named) {
                 return 1;
         }
 
-        enum tagtype type = (enum tagtype)s.eat_tag(TAG_UNKNOWN);
-        if (type == TAG_INVALID || s.remain() < sizeof(int32_t))
+        listtype = (enum tagtype)s.eat_tag(TAG_UNKNOWN);
+        if (listtype == TAG_INVALID || s.remain() < sizeof(int32_t))
             return 1;
         int32_t num = (int32_t)s.eat_int();
 
         for (ssize_t i = 0; i < num; i++) {
-            switch (type) {
+            switch (listtype) {
                 case TAG_END: // I'm not sure this is valid, but leaving it here anyways
                     t = new tag_end();
                     ERR("Unsure about TAG_ENDs in lists\n");
@@ -209,14 +276,14 @@ int tag_list::init(struct stream_eater &s, int named) {
                     t = new tag_compound();
                     break;
                 default:
-                    ERR("Invalid tag %d encountered in list\n", type);
+                    ERR("Invalid tag %d encountered in list\n", listtype);
                     return 1;
             }
             if (!t) {
                 ERR("Uh-oh, t was null in list\n");
                 return 1;
             }
-            int ret = t->init(s, 0); // since we're in a list, it's not named
+            int ret = t->read(s, 0); // since we're in a list, it's not named
             if (ret) // something broke
                 return 1;
             children.push_back(t);
@@ -224,9 +291,21 @@ int tag_list::init(struct stream_eater &s, int named) {
 
         return 0;
 }
+int tag_list::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_LIST);
+        s.write_string(name);
+    }
+    s.write_tag(listtype);
+    s.write_int(children.size());
+    for (std::vector<struct tag*>::iterator i = children.begin(); i != children.end(); ++i) {
+        (*i)->write(s, 0);
+    }
+    return 0;
+}
 // }}}
 // {{{ compound tag
-int tag_compound::init(struct stream_eater &s, int named) {
+int tag_compound::read(struct stream_eater &s, int named) {
         struct tag *t;
 
         if (named) {
@@ -241,7 +320,7 @@ int tag_compound::init(struct stream_eater &s, int named) {
             switch (s.peek_tag()) {
                 case TAG_END:
                     t = new tag_end();
-                    t->init(s, 1);
+                    t->read(s, 1);
                     delete t;
                     return 0; // TAG_END means we're done here
                 case TAG_BYTE:
@@ -282,7 +361,7 @@ int tag_compound::init(struct stream_eater &s, int named) {
                 ERR("Uh-oh, t was null in compound\n");
                 return 1;
             }
-            int ret = t->init(s, 1);
+            int ret = t->read(s, 1);
             if (ret) // something broke
                 return 1;
             children.push_back(t);
@@ -291,13 +370,24 @@ int tag_compound::init(struct stream_eater &s, int named) {
         ERR("s.remain() came up with 0 bytes before end of compound\n");
         return 1;
 }
+int tag_compound::write(struct stream_writer &s, int named) {
+    if (named) {
+        s.write_tag(TAG_COMPOUND);
+        s.write_string(name);
+    }
+    for (std::vector<struct tag*>::iterator i = children.begin(); i != children.end(); ++i) {
+        (*i)->write(s, 1);
+    }
+    s.write_tag(TAG_END);
+    return 0;
+}
 // }}}
 // }}}
 struct tag *parse_tags(uint8_t *data, size_t len) {
     // all NBT files start with a TAG_Compound
     struct stream_eater s(data, len);
     struct tag *top = new tag_compound();
-    int ret = top->init(s, 1);
+    int ret = top->read(s, 1);
     if (ret) {
         ERR("Unable to successfully parse NBT data\n");
         delete top;
