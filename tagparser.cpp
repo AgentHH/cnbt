@@ -1,12 +1,7 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <vector>
-
 #include "tagparser.hpp"
-#include "datastream.hpp"
 
 #define ERR(args...) fprintf(stderr, args)
+#define tag_printf(A...) for(int _i=0;_i<depth;_i++){printf("    ");}printf(A)
 
 namespace cnbt {
 // {{{ NBT parser
@@ -298,16 +293,128 @@ int tag_compound::init(struct stream_eater &s, int named) {
 }
 // }}}
 // }}}
-int parse_tags(uint8_t *data, size_t len) {
+struct tag *parse_tags(uint8_t *data, size_t len) {
     // all NBT files start with a TAG_Compound
     struct stream_eater s(data, len);
     struct tag *top = new tag_compound();
     int ret = top->init(s, 1);
     if (ret) {
         ERR("Unable to successfully parse NBT data\n");
+        delete top;
+        return NULL;
     }
-    delete top;
-    return ret;
+    return top;
+}
+// }}}
+// {{{ NBT tree printout
+void print_tag_tree(struct cnbt::tag *t, int depth) {
+    switch (t->type) {
+        case cnbt::TAG_END:
+            break;
+        case cnbt::TAG_BYTE: {
+            struct cnbt::tag_byte *x = dynamic_cast<struct cnbt::tag_byte*>(t);
+            if (x->name) {
+                tag_printf("byte \"%s\" %d\n", x->name, x->value);
+            } else {
+                tag_printf("byte %d\n", x->value);
+            }
+            break;
+        }
+        case cnbt::TAG_SHORT: {
+            struct cnbt::tag_short *x = dynamic_cast<struct cnbt::tag_short*>(t);
+            if (x->name) {
+                tag_printf("short \"%s\" %d\n", x->name, x->value);
+            } else {
+                tag_printf("short %d\n", x->value);
+            }
+            break;
+        }
+        case cnbt::TAG_INT: {
+            struct cnbt::tag_int *x = dynamic_cast<struct cnbt::tag_int*>(t);
+            if (x->name) {
+                tag_printf("int \"%s\" %d\n", x->name, x->value);
+            } else {
+                tag_printf("int %d\n", x->value);
+            }
+            break;
+        }
+        case cnbt::TAG_LONG: {
+            struct cnbt::tag_long *x = dynamic_cast<struct cnbt::tag_long*>(t);
+            if (x->name) {
+                tag_printf("long \"%s\" %ld\n", x->name, x->value);
+            } else {
+                tag_printf("long %ld\n", x->value);
+            }
+            break;
+        }
+        case cnbt::TAG_FLOAT: {
+            struct cnbt::tag_float *x = dynamic_cast<struct cnbt::tag_float*>(t);
+            if (x->name) {
+                tag_printf("float \"%s\" %f\n", x->name, x->value);
+            } else {
+                tag_printf("float %f\n", x->value);
+            }
+            break;
+        }
+        case cnbt::TAG_DOUBLE: {
+            struct cnbt::tag_double *x = dynamic_cast<struct cnbt::tag_double*>(t);
+            if (x->name) {
+                tag_printf("double \"%s\" %g\n", x->name, x->value);
+            } else {
+                tag_printf("double %g\n", x->value);
+            }
+            break;
+        }
+        case cnbt::TAG_STRING: {
+            struct cnbt::tag_string *x = dynamic_cast<struct cnbt::tag_string*>(t);
+            if (x->name) {
+                tag_printf("string \"%s\" \"%s\"\n", x->name, x->value);
+            } else {
+                tag_printf("string \"%s\"\n", x->value);
+            }
+            break;
+        }
+        case cnbt::TAG_BYTE_ARRAY: {
+            struct cnbt::tag_byte_array *x = dynamic_cast<struct cnbt::tag_byte_array*>(t);
+            if (x->name) {
+                tag_printf("byte array \"%s\" with %d elements\n", x->name, x->num);
+            } else {
+                tag_printf("byte array with %d elements\n", x->num);
+            }
+            break;
+        }
+        case cnbt::TAG_LIST: {
+            struct cnbt::tag_list *x = dynamic_cast<struct cnbt::tag_list*>(t);
+            if (x->name) {
+                tag_printf("list \"%s\"\n", x->name);
+            } else {
+                tag_printf("list\n");
+            }
+            for (std::vector<struct cnbt::tag*>::iterator i = x->children.begin(); i != x->children.end(); ++i) {
+                print_tag_tree(*i, depth + 1);
+            }
+            break;
+        }
+        case cnbt::TAG_COMPOUND: {
+            struct cnbt::tag_compound *x = dynamic_cast<struct cnbt::tag_compound*>(t);
+            if (x->name) {
+                tag_printf("compound \"%s\"\n", x->name);
+            } else {
+                tag_printf("compound\n");
+            }
+            for (std::vector<struct cnbt::tag*>::iterator i = x->children.begin(); i != x->children.end(); ++i) {
+                print_tag_tree(*i, depth + 1);
+            }
+            break;
+        }
+        default:
+            tag_printf("unrecognized tag\n");
+            break;
+    }
+}
+
+void print_tag_tree(struct cnbt::tag *t) {
+    print_tag_tree(t, 0);
 }
 // }}}
 } // end namespace "cnbt"

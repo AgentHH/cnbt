@@ -2,32 +2,17 @@
 // {{{ #includes
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <byteswap.h>
 #include <assert.h>
+#include <zlib.h>
 #include <arpa/inet.h>
+
+#include "constants.hpp"
 // }}}
 namespace cnbt {
-// {{{ stuff to help with NBT
-enum tagtype {
-    TAG_END = 0,
-    TAG_BYTE,
-    TAG_SHORT,
-    TAG_INT,
-    TAG_LONG,
-    TAG_FLOAT,
-    TAG_DOUBLE,
-    TAG_BYTE_ARRAY,
-    TAG_STRING,
-    TAG_LIST,
-    TAG_COMPOUND,
-
-    TAG_INVALID = 100,
-    TAG_UNKNOWN,
-};
-// }}}
 // {{{ evil hacks to support network floating point values
 float ntohf(float f);
 double ntohd(double d);
@@ -55,6 +40,7 @@ struct stream_eater {
     uint8_t *eat_string();
 };
 // }}}
-const uint8_t *lookup_thing(uint16_t id);
+// {{{ zlib helper function
+int decompress_data(uint8_t *in, size_t inlen, uint8_t *out, size_t *outlen);
 // }}}
 } // end namespace cnbt
