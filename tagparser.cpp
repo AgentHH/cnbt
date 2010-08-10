@@ -417,4 +417,41 @@ void print_tag_tree(struct cnbt::tag *t) {
     print_tag_tree(t, 0);
 }
 // }}}
+// {{{ helper function to eat an NBT file and return the tree
+struct tag *eat_nbt_file(char *filename) {
+    // these are hacks, see tagparser.hpp
+    uint8_t raw[NBT_COMPRESSED_BUFFER_SIZE], data[NBT_UNCOMPRESSED_BUFFER_SIZE];
+    size_t len;
+    int ret;
+
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+        ERR("Unable to open file \"%s\": %s\n", filename, strerror(errno));
+        return NULL;
+    }
+    ret = fread(raw, sizeof(uint8_t), NBT_COMPRESSED_BUFFER_SIZE, fp);
+    fclose(fp);
+    if (!ret) {
+        ERR("No data returned while reading %s\n", filename);
+        return NULL;
+    } else if (ret == NBT_COMPRESSED_BUFFER_SIZE) {
+        ERR("File was longer than %d\n", NBT_COMPRESSED_BUFFER_SIZE);
+        return NULL;
+    }
+
+    len = NBT_UNCOMPRESSED_BUFFER_SIZE;
+    ret = decompress_data(raw, ret, data, &len);
+    if (ret) {
+        return NULL;
+    }
+
+    struct tag *t = parse_tags(data, len);
+    if (ret) {
+        ERR("Error parsing tags from file\n");
+        return NULL;
+    }
+
+    return t;
+}
+// }}}
 } // end namespace "cnbt"

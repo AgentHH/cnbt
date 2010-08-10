@@ -15,11 +15,10 @@
 #include "tagparser.hpp"
 // }}}
 namespace cnbt {
-
+// {{{ #defines
 #define LEVEL_MAIN_FILE "level.dat"
-#define LEVEL_COMPRESSED_BUFFER_SIZE    16384
-#define LEVEL_UNCOMPRESSED_BUFFER_SIZE  131072
-// various coordinate structs
+// }}}
+// {{{ various coordinate structs
 struct chunkcoord;
 struct blockcoord;
 

@@ -4,11 +4,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
+#include <errno.h>
 
 #include "nbtconstants.hpp"
 #include "datastream.hpp"
 // }}}
 namespace cnbt {
+// {{{ constants for NBT file buffers
+// note, this is a hack. XXX
+// I should carefully pick the size, and reallocate
+// as necessary when inflating, but I'm lazy, and
+// this works for all of the Minecraft levels I've seen
+#define NBT_COMPRESSED_BUFFER_SIZE    16384
+#define NBT_UNCOMPRESSED_BUFFER_SIZE  131072
+// }}}
 // {{{ tag class definitions
 struct tag {
     std::vector<struct tag *> children;
@@ -87,5 +96,6 @@ struct tag_compound : tag {
 // {{{ parser functions
 struct tag *parse_tags(uint8_t *data, size_t len);
 void print_tag_tree(struct cnbt::tag *t);
+struct tag *eat_nbt_file(char *filename);
 // }}}
 } // end namespace "cnbt"
