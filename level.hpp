@@ -24,6 +24,8 @@ struct level {
     char *path;
 
     level(char *path);
+    virtual ~level();
+
     virtual int load(); // only loads level.dat
 };
 } // end namespace cnbt

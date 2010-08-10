@@ -7,6 +7,9 @@ namespace cnbt {
 level::level(char *path) : path(path) {
     root = NULL;
 }
+level::~level() {
+    delete root;
+}
 int level::load() {
     uint8_t raw[LEVEL_COMPRESSED_BUFFER_SIZE], data[LEVEL_UNCOMPRESSED_BUFFER_SIZE];
     size_t len;
@@ -19,6 +22,10 @@ int level::load() {
     strncat(filepath, LEVEL_MAIN_FILE, filepathlen - strlen(path) - 2);
 
     FILE *fp = fopen(filepath, "rb");
+    if (!fp) {
+        ERR("Unable to open file \"%s\": %s\n", filepath, strerror(errno));
+        return 1;
+    }
     ret = fread(raw, sizeof(uint8_t), LEVEL_COMPRESSED_BUFFER_SIZE, fp);
     fclose(fp);
     if (!ret) {
