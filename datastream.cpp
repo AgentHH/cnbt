@@ -148,6 +148,7 @@ stream_writer::stream_writer(uint8_t **extbuf) : extbuf(extbuf) {
     pos = 0;
     len = STREAM_WRITER_BUFSIZE;
     buf = (uint8_t*)malloc(sizeof(uint8_t) * len);
+    *extbuf = buf;
 }
 stream_writer::~stream_writer() {
     if (buf)
@@ -166,6 +167,7 @@ int stream_writer::reallocate() {
         ERR("Unable to reallocate output buffer in stream_writer\n");
         return 1;
     }
+    *extbuf = buf;
     return 0;
 }
 

@@ -213,6 +213,7 @@ int tag_byte_array::write(struct stream_writer &s, int named) {
         s.write_tag(TAG_BYTE_ARRAY);
         s.write_string(name);
     }
+    s.write_int(num);
     s.write_byte_array((uint8_t*)value, num);
     return 0;
 }
