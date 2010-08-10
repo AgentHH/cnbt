@@ -144,6 +144,8 @@ uint8_t *stream_eater::eat_string() {
 }
 // }}}
 // {{{ stream writer to spit out new data
+// note: the buffer allocated by the stream writer will be
+// automatically freed upon deletion
 stream_writer::stream_writer(uint8_t **extbuf) : extbuf(extbuf) {
     pos = 0;
     len = STREAM_WRITER_BUFSIZE;
@@ -300,68 +302,6 @@ int stream_writer::write_string(uint8_t *s) {
     pos += l;
 
     return 0;
-}
-// }}}
-// {{{ zlib helper function
-int decompress_data(uint8_t *in, size_t inlen, uint8_t *out, size_t *outlen) {
-    int ret;
-    z_stream stream;
-
-    stream.zalloc = Z_NULL;
-    stream.zfree = Z_NULL;
-    stream.opaque = Z_NULL;
-    stream.avail_in = inlen;
-    stream.next_in = in;
-    ret = inflateInit2(&stream, 16 + MAX_WBITS);
-    if (ret != Z_OK) {
-        switch (ret) {
-            case Z_VERSION_ERROR:
-                ERR("Z_VERSION_ERROR in inflateInit\n");
-                goto _decompress_data_cleanup;
-            case Z_STREAM_ERROR:
-                ERR("Z_STREAM_ERROR in inflateInit\n");
-                goto _decompress_data_cleanup;
-        }
-        ERR("Error in inflateInit (%d)\n", ret);
-        goto _decompress_data_cleanup;
-    }
-
-    stream.avail_out = *outlen;
-    stream.next_out = out;
-
-    ret = inflate(&stream, Z_FINISH);
-    switch (ret) {
-        case Z_STREAM_ERROR:
-            ERR("Z_STREAM_ERROR in inflate\n");
-            goto _decompress_data_cleanup;
-        case Z_NEED_DICT:
-            ERR("Z_NEED_DICT in inflate\n");
-            goto _decompress_data_cleanup;
-        case Z_DATA_ERROR:
-            ERR("Z_DATA_ERROR in inflate\n");
-            goto _decompress_data_cleanup;
-        case Z_MEM_ERROR:
-            ERR("Z_MEM_ERROR in inflate\n");
-            goto _decompress_data_cleanup;
-    }
-
-    if (ret != Z_STREAM_END) {
-        ERR("Z_STREAM_END not encountered in inflate (%d)\n", ret);
-        goto _decompress_data_cleanup;
-    }
-
-    *outlen = *outlen - stream.avail_out;
-
-    ret = inflateEnd(&stream);
-    if (ret != Z_OK) {
-        ERR("inflateEnd failed\n");
-    }
-
-    return 0;
-
-_decompress_data_cleanup:
-    inflateEnd(&stream);
-    return 1;
 }
 // }}}
 } // end namespace cnbt

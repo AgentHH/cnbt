@@ -68,7 +68,4 @@ struct stream_writer {
     int write_string(uint8_t *s);
 };
 // }}}
-// {{{ zlib helper function
-int decompress_data(uint8_t *in, size_t inlen, uint8_t *out, size_t *outlen);
-// }}}
 } // end namespace cnbt

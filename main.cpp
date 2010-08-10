@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
         t->write(w, 1);
         printf("wrote %u bytes to stream_writer\n", w.written());
 
-        FILE *fp = fopen(argv[3], "w");
-        fwrite(buf, sizeof(uint8_t), w.written(), fp);
-        fclose(fp);
+        gzFile fp = gzopen(argv[3], "wb");
+        gzwrite(fp, buf, sizeof(uint8_t) * w.written());
+        gzclose(fp);
 
         delete(t);
     } else {
