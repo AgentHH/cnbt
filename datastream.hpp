@@ -43,6 +43,7 @@ struct stream_eater {
     uint8_t *eat_byte_array(uint32_t l);
     uint16_t *eat_short_array(uint32_t l);
     uint8_t *eat_string();
+    int32_t eat_base36_int();
 };
 struct stream_writer {
     uint8_t *buf;

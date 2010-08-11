@@ -5,9 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
+#include <ftw.h>
 #include <errno.h>
 #include <unordered_set>
 
@@ -17,6 +15,12 @@
 namespace cnbt {
 // {{{ #defines
 #define LEVEL_MAIN_FILE "level.dat"
+
+#define CHUNK_DATA_LEN 16384
+#define CHUNK_SKYLIGHT_LEN 16384
+#define CHUNK_HEIGHTMAP_LEN 256
+#define CHUNK_BLOCKLIGHT_LEN 16384
+#define CHUNK_BLOCKS_LEN 32768
 // }}}
 // {{{ various coordinate structs
 struct chunkcoord;
@@ -40,6 +44,22 @@ struct blockcoord {
     blockcoord(struct chunkcoord &c);
 };
 // }}}
+struct chunk {
+    uint8_t data[CHUNK_DATA_LEN];
+    uint8_t skylight[CHUNK_SKYLIGHT_LEN];
+    uint8_t heightmap[CHUNK_HEIGHTMAP_LEN];
+    uint8_t blocklight[CHUNK_BLOCKLIGHT_LEN];
+    uint8_t blocks[CHUNK_BLOCKS_LEN];
+
+    int32_t x, y;
+    int64_t timestamp;
+
+    bool terrainpopulated;
+
+    std::vector<struct tag *> tags;
+
+    int init(struct tag *t);
+};
 // {{{ main level struct
 struct level {
     struct tag *root;

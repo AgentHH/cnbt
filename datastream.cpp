@@ -142,6 +142,42 @@ uint8_t *stream_eater::eat_string() {
     pos += s * sizeof(uint8_t);
     return ret;
 }
+int32_t stream_eater::eat_base36_int() {
+    // this function is not space-friendly, but that's ok
+    bool negative = false;
+    uint8_t *s = &buf[pos];
+
+    if (remain() < 1)
+        return 0;
+
+    if (s[0] == '-') {
+        negative = true;
+        pos++;
+        s++;
+    }
+
+    size_t i, len = remain(), ret = 0;
+    for (i = 0; i < len; i++) {
+        int temp = 0;
+        if (s[i] >= '0' && s[i] <= '9') {
+            temp = s[i] - '0';
+        } else if (s[i] >= 'a' && s[i] <= 'z') {
+            temp = 10 + s[i] - 'a';
+        } else if (s[i] >= 'A' && s[i] <= 'Z') {
+            temp = 10 + s[i] - 'A';
+        } else {// invalid character
+            break;
+        }
+        ret *= 36;
+        ret += temp;
+
+        if (i == 20) // sanity check
+            printf("Should i be larger than 20 in eat_base36_int()?\n");
+    }
+
+    pos += i;
+    return (int32_t)(ret * (negative ? -1 : 1));
+}
 // }}}
 // {{{ stream writer to spit out new data
 // note: the buffer allocated by the stream writer will be

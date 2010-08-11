@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
         uint8_t *buf;
         cnbt::stream_writer w(&buf);
         t->write(w, 1);
-        printf("wrote %u bytes to stream_writer\n", w.written());
 
         gzFile fp = gzopen(argv[3], "wb");
         gzwrite(fp, buf, sizeof(uint8_t) * w.written());
@@ -51,7 +50,8 @@ int main(int argc, char *argv[]) {
             printf("level.load() failed\n");
             return 1;
         }
-        cnbt::print_tag_tree(l.root);
+        //cnbt::print_tag_tree(l.root);
+        l.load_chunk_list();
     }
 
     return 0;

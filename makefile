@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-Wall -g -std=c++0x
+CXXFLAGS=-Wall -std=c++0x
 LDFLAGS=-lz
 DEPS=datastream.hpp tagparser.hpp level.hpp nbtconstants.hpp
 OBJ=datastream.o tagparser.o level.o main.o
