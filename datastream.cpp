@@ -188,9 +188,14 @@ stream_writer::stream_writer(uint8_t **extbuf) : extbuf(extbuf) {
     buf = (uint8_t*)malloc(sizeof(uint8_t) * len);
     *extbuf = buf;
 }
+stream_writer::stream_writer(uint8_t *buf, size_t len) : buf(buf), len(len) {
+    pos = 0;
+    extbuf = NULL;
+}
 stream_writer::~stream_writer() {
-    if (buf)
-        free(buf);
+    if (extbuf)
+        if (buf)
+            free(buf);
 }
 size_t stream_writer::written() {
     return pos;
@@ -199,6 +204,8 @@ size_t stream_writer::remain() {
     return len - pos;
 }
 int stream_writer::reallocate() {
+    if (!extbuf)
+        return 1;
     len += STREAM_WRITER_BUFSIZE;
     buf = (uint8_t*)realloc(buf, len);
     if (!buf) {

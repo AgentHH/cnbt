@@ -9,6 +9,9 @@
 #include "tagparser.hpp"
 #include "datastream.hpp"
 #include "level.hpp"
+#include "chunk.hpp"
+#include "coord.hpp"
+#include "render.hpp"
 
 #define ERR(args...) fprintf(stderr, args)
 
@@ -43,6 +46,16 @@ int main(int argc, char *argv[]) {
         gzclose(fp);
 
         delete(t);
+    } else if (!strcmp(argv[1], "-c")) {
+        if (argc < 4) {
+            ERR("need x and y\n");
+            exit(1);
+        }
+        int32_t x = strtol(argv[2], NULL, 0);
+        int32_t y = strtol(argv[3], NULL, 0);
+        uint8_t buf[32];
+        cnbt::chunkcoord_to_filename(cnbt::chunkcoord(x, y), buf, 32);
+        printf("Filename is \"%s\"\n", buf);
     } else {
         cnbt::level l(argv[1]);
         int ret = l.load();
@@ -52,6 +65,36 @@ int main(int argc, char *argv[]) {
         }
         //cnbt::print_tag_tree(l.root);
         l.load_chunk_list();
+
+        for (cnbt::chunkmap::iterator i = l.chunks.begin(); i != l.chunks.end(); ++i) {
+            char *path = argv[1], buf[32];
+            //printf("Chunk (%d,%d)\n", (*i).first.x, (*i).first.y);
+            int namelen = cnbt::chunkcoord_to_filename((*i).first, (uint8_t*)buf, 32);
+
+            size_t chunkpathlen = strlen(path) + 1 + namelen;
+            char chunkpath[chunkpathlen];
+            strncpy(chunkpath, path, chunkpathlen);
+            strncat(chunkpath, "/", chunkpathlen - strlen(path) - 1);
+            strncat(chunkpath, buf, chunkpathlen - strlen(path) - 2);
+
+            cnbt::tag *t = cnbt::eat_nbt_file(chunkpath);
+            if (!t) {
+                ERR("Eating chunk file failed\n");
+                exit(1);
+            }
+
+            cnbt::chunk c;
+            ret = c.init(t);
+            if (ret) {
+                ERR("Chunk init failed\n");
+                exit(1);
+            }
+            delete(t);
+
+            snprintf(buf, 32, "chunk_%d-%d.pgm", c.x, c.y);
+
+            cnbt::render_top_down(&c, buf);
+        }
     }
 
     return 0;

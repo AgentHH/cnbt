@@ -51,6 +51,7 @@ struct stream_writer {
     size_t len, pos;
 
     stream_writer(uint8_t **buf);
+    stream_writer(uint8_t *buf, size_t len);
     ~stream_writer();
     size_t written();
     size_t remain();

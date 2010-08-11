@@ -16,12 +16,13 @@
 namespace cnbt {
 // {{{ #defines and typedefs
 #define LEVEL_MAIN_FILE "level.dat"
+typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
 // }}}
 // {{{ main level struct
 struct level {
     struct tag *root;
     char *path;
-    std::map<struct chunkcoord, struct chunkinfo*> chunks;
+    chunkmap chunks;
 
     level(char *path);
     virtual ~level();

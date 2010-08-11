@@ -1,8 +1,8 @@
 CXX=g++
-CXXFLAGS=-Wall -std=c++0x
+CXXFLAGS=-Wall -O2
 LDFLAGS=-lz
-DEPS=datastream.hpp tagparser.hpp level.hpp coord.hpp chunk.hpp nbtconstants.hpp
-OBJ=datastream.o tagparser.o chunk.o level.o main.o
+DEPS=datastream.hpp tagparser.hpp level.hpp coord.hpp chunk.hpp render.hpp nbtconstants.hpp
+OBJ=datastream.o tagparser.o chunk.o level.o render.o main.o
 TARGET=cnbt
 
 %.o: %.cpp $(DEPS)

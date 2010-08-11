@@ -1,6 +1,21 @@
 #include "chunk.hpp"
 
 namespace cnbt {
+int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, size_t len) {
+    struct stream_writer w(name, len);
+
+    w.write_base36_int((uint32_t)c.x % 64);
+    w.write_byte_array((uint8_t*)"/", 1);
+    w.write_base36_int((uint32_t)c.y % 64);
+    w.write_byte_array((uint8_t*)"/c.", 3);
+    w.write_base36_int(c.x);
+    w.write_byte_array((uint8_t*)".", 1);
+    w.write_base36_int(c.y);
+    w.write_byte_array((uint8_t*)".dat", 5);
+
+    return w.written();
+}
+
 int parse_chunk_file_name(const char *name, int32_t *x, int32_t *y) {
     struct stream_eater s((uint8_t *)name, strlen(name));
     const char *temp;
@@ -56,7 +71,7 @@ int find_chunk_files(struct level *l, const char *path) {
 
             struct chunkcoord c(x, y);
             struct chunkinfo *ci = new struct chunkinfo();
-            l->chunks.insert(std::pair<struct chunkcoord, struct chunkinfo*>(c, ci));
+            l->chunks[c] = ci;
         } else {
             continue;
         }
@@ -79,7 +94,7 @@ int chunk::init(struct tag *t) {
     u = t->children[0];
     if (u->type != TAG_COMPOUND)
         return 1;
-    if (strcmp((char*)t->name, "Level"))
+    if (strcmp((char*)u->name, "Level"))
         return 1;
     // ok, u->children has everything we want now
     for (std::vector<struct tag *>::iterator i = u->children.begin(); i != u->children.end(); ++i) {

@@ -23,6 +23,7 @@ namespace cnbt {
 
 typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
 // }}}
+int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, size_t len);
 int find_chunk_files(struct level *l, const char *path);
 // {{{ chunk struct
 struct chunk {
