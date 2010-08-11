@@ -67,6 +67,7 @@ struct stream_writer {
     int write_byte_array(uint8_t *d, uint32_t l);
     int write_short_array(uint16_t *d, uint32_t l);
     int write_string(uint8_t *s);
+    int write_base36_int(int32_t d);
 };
 // }}}
 } // end namespace cnbt

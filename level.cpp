@@ -107,7 +107,6 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *y) {
     if (temp == NULL || strncmp(temp, ".dat", 4))
         return 1;
 
-    printf("found chunk (%d,%d)\n", *x, *y);
     return 0;
 }
 int examine_chunk_file(const char *fpath, const struct stat *sb, int typeflag) {

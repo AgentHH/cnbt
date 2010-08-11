@@ -339,5 +339,51 @@ int stream_writer::write_string(uint8_t *s) {
 
     return 0;
 }
+int stream_writer::write_base36_int(int32_t n) {
+    // this function is not space-friendly, but that's ok
+    if (n < 0) {
+        n *= -1;
+        while (remain() < 1) {
+            if (reallocate() != 0) {
+                return 1;
+            }
+        }
+        buf[pos] = '-';
+        pos++;
+    } else if (n == 0) {
+        while (remain() < 1) {
+            if (reallocate() != 0) {
+                return 1;
+            }
+        }
+        buf[pos] = '0';
+        pos++;
+        return 0;
+    }
+
+    uint8_t tempbuf[11]; // 32-bit numbers are at most 10 digits, and base-36 will be much smaller
+
+    size_t i = 0;
+    while (n) {
+        int temp = n % 36;
+        n /= 36;
+        if (temp < 10) {
+            tempbuf[i] = '0' + temp;
+        } else {
+            tempbuf[i] = 'a' + (temp - 10);
+        }
+        i++;
+    }
+    while (remain() < i) {
+        if (reallocate() != 0) {
+            return 1;
+        }
+    }
+    for (size_t j = 0; j < i; j++) {
+        buf[pos++] = tempbuf[(i - 1) - j];
+    }
+
+    return 0;
+}
 // }}}
 } // end namespace cnbt

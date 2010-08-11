@@ -7,6 +7,8 @@
 #include <assert.h>
 #include <ftw.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <unordered_set>
 
 #include "datastream.hpp"
