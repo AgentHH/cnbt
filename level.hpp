@@ -9,13 +9,13 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <unordered_set>
+#include <tr1/unordered_map>
 
 #include "datastream.hpp"
 #include "tagparser.hpp"
 // }}}
 namespace cnbt {
-// {{{ #defines
+// {{{ #defines and typedefs
 #define LEVEL_MAIN_FILE "level.dat"
 
 #define CHUNK_DATA_LEN 16384
@@ -23,6 +23,8 @@ namespace cnbt {
 #define CHUNK_HEIGHTMAP_LEN 256
 #define CHUNK_BLOCKLIGHT_LEN 16384
 #define CHUNK_BLOCKS_LEN 32768
+
+typedef std::pair<struct chunkcoord*, struct chunk*> chunkmaptype;
 // }}}
 // {{{ various coordinate structs
 struct chunkcoord;
@@ -46,6 +48,7 @@ struct blockcoord {
     blockcoord(struct chunkcoord &c);
 };
 // }}}
+// {{{ chunk struct
 struct chunk {
     uint8_t data[CHUNK_DATA_LEN];
     uint8_t skylight[CHUNK_SKYLIGHT_LEN];
@@ -62,11 +65,12 @@ struct chunk {
 
     int init(struct tag *t);
 };
+// }}}
 // {{{ main level struct
 struct level {
     struct tag *root;
     char *path;
-    std::unordered_set<struct chunkcoord> chunks;
+    std::tr1::unordered_map<struct chunkcoord*, struct chunk*> chunks;
 
     level(char *path);
     virtual ~level();
