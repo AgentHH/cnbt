@@ -68,10 +68,11 @@ int main(int argc, char *argv[]) {
 
         cnbt::chunkmanager *cm = &l.manager;
         printf("bounding box is (%d,%d) to (%d,%d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
-        size_t w = 1 + cm->max->x - cm->min->x, h = 1 + cm->max->z - cm->min->z;
+        size_t h = 1 + cm->max->x - cm->min->x, w = 1 + cm->max->z - cm->min->z;
+        printf("size of box is (%d,%d)\n", w, h);
         printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(w * h));
 
-        uint8_t *image = (uint8_t*)calloc(w * h * 256, sizeof(uint8_t));
+        uint8_t *image = (uint8_t*)calloc(w * h * 256 * 3, sizeof(uint8_t));
         if (!image) {
             ERR("Failed to allocate image\n");
             exit(1);
@@ -110,9 +111,9 @@ int main(int argc, char *argv[]) {
         }
         FILE *fp = fopen("out/map.pgm", "wb");
         char header[32];
-        ret = snprintf(header, 32, "P5 %lu %lu 255\n", w * 16, h * 16);
+        ret = snprintf(header, 32, "P6 %lu %lu 255\n", w * 16, h * 16);
         fwrite(header, sizeof(char), ret, fp);
-        fwrite(image, sizeof(uint8_t), w * h * 256, fp);
+        fwrite(image, sizeof(uint8_t), w * h * 256 * 3, fp);
         fclose(fp);
         free(image);
     }
