@@ -12,7 +12,7 @@ level::~level() {
 }
 
 int level::load_chunk_list() {
-    return find_chunk_files(this, path);
+    return find_chunk_files(&this->manager, path);
 }
 int level::load() {
     size_t filepathlen = strlen(path) + 1 + sizeof(LEVEL_MAIN_FILE);

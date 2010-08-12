@@ -8,11 +8,14 @@
 // }}}
 namespace cnbt {
 struct chunkcoord {
-    int32_t x, y;
+    int32_t x, z;
 
-    chunkcoord(int32_t x, int32_t y) : x(x), y(y) {}
+    chunkcoord() : x(0), z(0) {}
+    chunkcoord(int32_t x, int32_t z) : x(x), z(z) {}
     bool operator<(const chunkcoord &other) const {
-        if (x < other.x || y < other.y)
+        if (x < other.x)
+            return true;
+        if (x == other.x && z < other.z)
             return true;
         return false;
     }

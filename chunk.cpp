@@ -1,22 +1,24 @@
 #include "chunk.hpp"
 
+#define ERR(args...) fprintf(stderr, args)
+
 namespace cnbt {
 int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, size_t len) {
     struct stream_writer w(name, len);
 
     w.write_base36_int((uint32_t)c.x % 64);
     w.write_byte_array((uint8_t*)"/", 1);
-    w.write_base36_int((uint32_t)c.y % 64);
+    w.write_base36_int((uint32_t)c.z % 64);
     w.write_byte_array((uint8_t*)"/c.", 3);
     w.write_base36_int(c.x);
     w.write_byte_array((uint8_t*)".", 1);
-    w.write_base36_int(c.y);
+    w.write_base36_int(c.z);
     w.write_byte_array((uint8_t*)".dat", 5);
 
     return w.written();
 }
 
-int parse_chunk_file_name(const char *name, int32_t *x, int32_t *y) {
+int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
     struct stream_eater s((uint8_t *)name, strlen(name));
     const char *temp;
     temp = (const char *)s.eat_byte_array(2);
@@ -29,7 +31,7 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *y) {
     if (temp == NULL || strncmp(temp, ".", 1))
         return 1;
 
-    *y = s.eat_base36_int();
+    *z = s.eat_base36_int();
 
     temp = (const char*)s.eat_byte_array(4);
     if (temp == NULL || strncmp(temp, ".dat", 4))
@@ -37,7 +39,7 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *y) {
 
     return 0;
 }
-int find_chunk_files(struct level *l, const char *path) {
+int find_chunk_files(struct chunkmanager *cm, const char *path) {
     DIR *dir;
     struct dirent *dirp;
 
@@ -61,17 +63,20 @@ int find_chunk_files(struct level *l, const char *path) {
             strncat(newpath, "/", newpathlen - strlen(path) - 1);
             strncat(newpath, dirp->d_name, newpathlen - strlen(path) - 2);
 
-            find_chunk_files(l, newpath);
+            find_chunk_files(cm, newpath);
         } else if (dirp->d_type == DT_REG) {
-            int32_t x, y;
-            int ret = parse_chunk_file_name(dirp->d_name, &x, &y);
+            int32_t x, z;
+            int ret = parse_chunk_file_name(dirp->d_name, &x, &z);
             if (ret)
                 continue;
             //printf("found chunk (%d,%d)\n", x, y);
 
-            struct chunkcoord c(x, y);
-            struct chunkinfo *ci = new struct chunkinfo();
-            l->chunks[c] = ci;
+            struct chunkcoord c(x, z);
+            ret = cm->add_new_chunk(c);
+            if (ret) {
+                printf("Warning: possible duplicate chunk found\n");
+                return ret;
+            }
         } else {
             continue;
         }
@@ -135,8 +140,8 @@ int chunk::init(struct tag *t) {
             if (!strcmp(name, "xPos")) {
                 x = temp->value;
                 continue;
-            } else if (!strcmp(name, "yPos")) {
-                y = temp->value;
+            } else if (!strcmp(name, "zPos")) {
+                z = temp->value;
                 continue;
             }
         } else if (type == TAG_BYTE) {
@@ -154,6 +159,38 @@ int chunk::init(struct tag *t) {
         }
         // catch-all, so we keep anything we don't care about
         tags.push_back(*i);
+    }
+
+    return 0;
+}
+
+chunkmanager::chunkmanager() {
+    max = NULL;
+    min = NULL;
+}
+
+int chunkmanager::add_new_chunk(struct chunkcoord c) {
+    struct chunkinfo *ci = new chunkinfo(c);
+    if (chunks.count(c)) {
+        return 1;
+    }
+    chunks[c] = ci;
+
+    if (!max && !min) {
+        max = new struct chunkcoord(c);
+        min = new struct chunkcoord(c);
+    } else if (max && min) {
+        if (max->x < c.x)
+            max->x = c.x;
+        if (max->z < c.z)
+            max->z = c.z;
+        if (min->x > c.x)
+            min->x = c.x;
+        if (min->z > c.z)
+            min->z = c.z;
+    } else {
+        ERR("One of max and min were set; this should not happen\n");
+        return 1;
     }
 
     return 0;

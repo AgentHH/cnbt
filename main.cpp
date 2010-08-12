@@ -48,13 +48,13 @@ int main(int argc, char *argv[]) {
         delete(t);
     } else if (!strcmp(argv[1], "-c")) {
         if (argc < 4) {
-            ERR("need x and y\n");
+            ERR("need x and z\n");
             exit(1);
         }
         int32_t x = strtol(argv[2], NULL, 0);
-        int32_t y = strtol(argv[3], NULL, 0);
+        int32_t z = strtol(argv[3], NULL, 0);
         uint8_t buf[32];
-        cnbt::chunkcoord_to_filename(cnbt::chunkcoord(x, y), buf, 32);
+        cnbt::chunkcoord_to_filename(cnbt::chunkcoord(x, z), buf, 32);
         printf("Filename is \"%s\"\n", buf);
     } else {
         cnbt::level l(argv[1]);
@@ -66,11 +66,23 @@ int main(int argc, char *argv[]) {
         //cnbt::print_tag_tree(l.root);
         l.load_chunk_list();
 
-        for (cnbt::chunkmap::iterator i = l.chunks.begin(); i != l.chunks.end(); ++i) {
-            char *path = argv[1], buf[32];
-            //printf("Chunk (%d,%d)\n", (*i).first.x, (*i).first.y);
-            int namelen = cnbt::chunkcoord_to_filename((*i).first, (uint8_t*)buf, 32);
+        cnbt::chunkmanager *cm = &l.manager;
+        printf("bounding box is (%d,%d) to (%d,%d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
+        size_t w = 1 + cm->max->x - cm->min->x, h = 1 + cm->max->z - cm->min->z;
+        printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(w * h));
 
+        uint8_t *image = (uint8_t*)calloc(w * h * 256, sizeof(uint8_t));
+        if (!image) {
+            ERR("Failed to allocate image\n");
+            exit(1);
+        }
+
+        // XXX this should be handled by the chunk manager,
+        //     but I really want to see a whole, rendered map
+        for (cnbt::chunkmap::iterator i = cm->chunks.begin(); i != cm->chunks.end(); ++i) {
+            char *path = argv[1], buf[32];
+            //printf("Chunk (%d,%d)\n", (*i).first.x, (*i).first.z);
+            int namelen = cnbt::chunkcoord_to_filename((*i).first, (uint8_t*)buf, 32);
             size_t chunkpathlen = strlen(path) + 1 + namelen;
             char chunkpath[chunkpathlen];
             strncpy(chunkpath, path, chunkpathlen);
@@ -79,6 +91,7 @@ int main(int argc, char *argv[]) {
 
             cnbt::tag *t = cnbt::eat_nbt_file(chunkpath);
             if (!t) {
+                printf("tried to acquire chunk %d, %d\n", (*i).first.x, (*i).first.z);
                 ERR("Eating chunk file failed\n");
                 exit(1);
             }
@@ -91,10 +104,17 @@ int main(int argc, char *argv[]) {
             }
             delete(t);
 
-            snprintf(buf, 32, "chunk_%d-%d.pgm", c.x, c.y);
+            //printf("%d %d\n", c.x, c.z);
 
-            cnbt::render_top_down(&c, buf);
+            cnbt::render_top_down(&c, image, (c.x - cm->min->x), (c.z - cm->min->z), w, h);
         }
+        FILE *fp = fopen("out/map.pgm", "wb");
+        char header[32];
+        ret = snprintf(header, 32, "P5 %lu %lu 255\n", w * 16, h * 16);
+        fwrite(header, sizeof(char), ret, fp);
+        fwrite(image, sizeof(uint8_t), w * h * 256, fp);
+        fclose(fp);
+        free(image);
     }
 
     return 0;

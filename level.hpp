@@ -6,7 +6,6 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
-#include <map>
 
 #include "datastream.hpp"
 #include "tagparser.hpp"
@@ -16,13 +15,12 @@
 namespace cnbt {
 // {{{ #defines and typedefs
 #define LEVEL_MAIN_FILE "level.dat"
-typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
 // }}}
 // {{{ main level struct
 struct level {
     struct tag *root;
     char *path;
-    chunkmap chunks;
+    struct chunkmanager manager;
 
     level(char *path);
     virtual ~level();
