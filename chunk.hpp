@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <map>
+#include <deque>
 
 #include "datastream.hpp"
 #include "tagparser.hpp"
@@ -20,6 +21,8 @@ namespace cnbt {
 #define CHUNK_HEIGHTMAP_LEN 256
 #define CHUNK_BLOCKLIGHT_LEN 16384
 #define CHUNK_BLOCKS_LEN 32768
+
+#define CHUNKS_MAX_LOADED 4096
 
 typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
 typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
@@ -49,14 +52,24 @@ struct chunkinfo {
     struct chunk *c;
     struct chunkcoord coord;
 
-    chunkinfo(struct chunkcoord coord) : coord(coord) {}
+    chunkinfo(struct chunkcoord coord) : c(NULL), coord(coord) {}
+    ~chunkinfo();
 };
 // }}}
 struct chunkmanager {
     chunkmap chunks;
     struct chunkcoord *max, *min;
+    chunkmap::iterator mapiterator;
+    std::deque<struct chunkinfo*> loadedchunks;
+    const char *path;
 
     chunkmanager();
+    ~chunkmanager();
     int add_new_chunk(struct chunkcoord c);
+    int load_chunk_raw(struct chunkinfo *c);
+    int load_chunk(struct chunkinfo *c);
+    //int set_load_strategy(); // for oblique etc levels
+    struct chunkinfo *start();
+    struct chunkinfo *next();
 };
 } // end namespace cnbt

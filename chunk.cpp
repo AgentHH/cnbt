@@ -164,13 +164,31 @@ int chunk::init(struct tag *t) {
     return 0;
 }
 
+chunkinfo::~chunkinfo() {
+    if (c)
+        delete c;
+}
+
 chunkmanager::chunkmanager() {
     max = NULL;
     min = NULL;
 }
+chunkmanager::~chunkmanager() {
+    if (max)
+        delete max;
+    if (min)
+        delete min;
+
+    for (chunkmap::iterator i = chunks.begin(); i != chunks.end(); ++i) {
+        struct chunkinfo *ci = (*i).second;
+        if (ci)
+            delete ci;
+        chunks.erase(i);
+    }
+}
 
 int chunkmanager::add_new_chunk(struct chunkcoord c) {
-    struct chunkinfo *ci = new chunkinfo(c);
+    struct chunkinfo *ci = new struct chunkinfo(c);
     if (chunks.count(c)) {
         return 1;
     }
@@ -194,5 +212,75 @@ int chunkmanager::add_new_chunk(struct chunkcoord c) {
     }
 
     return 0;
+}
+
+int chunkmanager::load_chunk_raw(struct chunkinfo *ci) {
+    char buf[32];
+    int namelen = chunkcoord_to_filename(ci->coord, (uint8_t*)buf, 32);
+    size_t chunkpathlen = strlen(path) + 1 + namelen;
+    char chunkpath[chunkpathlen];
+    strncpy(chunkpath, path, chunkpathlen);
+    strncat(chunkpath, "/", chunkpathlen - strlen(path) - 1);
+    strncat(chunkpath, buf, chunkpathlen - strlen(path) - 2);
+
+    struct tag *t = eat_nbt_file(chunkpath);
+    if (!t) {
+        ERR("Eating file for chunk %d, %d failed\n", ci->coord.x, ci->coord.z);
+        return 1;
+    }
+
+    struct chunk *c = new struct chunk();
+    int ret = c->init(t);
+    delete t;
+    if (ret) {
+        ERR("Chunk parsing failed\n");
+        return 1;
+    }
+
+    ci->c = c;
+    return 0;
+}
+
+int chunkmanager::load_chunk(struct chunkinfo *ci) {
+    if (ci->c)
+        return 0;
+
+    int ret = load_chunk_raw(ci);
+    if (ret) {
+        return NULL;
+    }
+    while (loadedchunks.size() > CHUNKS_MAX_LOADED) {
+        struct chunkinfo *temp = loadedchunks.front();
+        delete temp->c;
+        temp->c = NULL;
+        loadedchunks.pop_front();
+    }
+    loadedchunks.push_back(ci);
+
+    return 0;
+}
+
+struct chunkinfo *chunkmanager::start() {
+    // for now, just uses an internal chunkmap iterator
+    if (chunks.size() < 1)
+        return NULL;
+    mapiterator = chunks.begin();
+
+    struct chunkinfo *temp = (*mapiterator).second;
+    if (load_chunk(temp) != 0) {
+        return NULL;
+    }
+    return temp;
+}
+struct chunkinfo *chunkmanager::next() {
+    if (mapiterator == chunks.end())
+        return NULL;
+
+    struct chunkinfo *temp = (*mapiterator).second;
+    if (load_chunk(temp) != 0) {
+        return NULL;
+    }
+    ++mapiterator;
+    return temp;
 }
 } // end namespace cnbt

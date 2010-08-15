@@ -6,14 +6,13 @@ namespace cnbt {
 // {{{ level class methods
 level::level(char *path) : path(path) {
     root = NULL;
+    manager.path = path;
 }
 level::~level() {
-    delete root;
+    if (root)
+        delete root;
 }
 
-int level::load_chunk_list() {
-    return find_chunk_files(&this->manager, path);
-}
 int level::load() {
     size_t filepathlen = strlen(path) + 1 + sizeof(LEVEL_MAIN_FILE);
     char filepath[filepathlen];
@@ -28,6 +27,13 @@ int level::load() {
     }
 
     root = t;
+
+    int ret = find_chunk_files(&this->manager, path);
+    if (ret) {
+        ERR("Chunk file discovery failed\n");
+        delete t;
+        return 1;
+    }
     return 0;
 }
 // }}}

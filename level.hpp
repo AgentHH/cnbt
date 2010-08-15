@@ -23,10 +23,9 @@ struct level {
     struct chunkmanager manager;
 
     level(char *path);
-    virtual ~level();
+    ~level();
 
-    virtual int load(); // only loads level.dat
-    virtual int load_chunk_list();
+    int load(); // loads level.dat and chunk list
 };
 // }}}
 } // end namespace cnbt
