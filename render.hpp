@@ -7,8 +7,8 @@
 #include <assert.h>
 
 #include "chunk.hpp"
+#include "minecraft.hpp"
 // }}}
 namespace cnbt {
-// filename is a temporary hack to see this thing working
-void render_top_down(struct chunk *c, uint8_t *buf, int32_t x, int32_t z, int32_t w, int32_t h);
+void render_top_down(struct chunk *c, uint8_t *buf, int32_t x, int32_t z, int32_t w, int32_t h, game::entitymap &em);
 } // end namespace cnbt

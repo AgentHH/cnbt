@@ -11,6 +11,7 @@
 #include "level.hpp"
 #include "chunk.hpp"
 #include "coord.hpp"
+#include "minecraft.hpp"
 #include "render.hpp"
 
 #define ERR(args...) fprintf(stderr, args)
@@ -77,12 +78,15 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
 
+        cnbt::game::entitymap em;
+        cnbt::game::init_blocks(em);
+
         cnbt::chunkinfo *ci = cm->start();
         do {
-            cnbt::render_top_down(ci->c, image, (ci->coord.x - cm->min->x), (ci->coord.z - cm->min->z), w, h);
+            cnbt::render_top_down(ci->c, image, (ci->coord.x - cm->min->x), (ci->coord.z - cm->min->z), w, h, em);
         } while ((ci = cm->next()));
 
-        FILE *fp = fopen("out/map.pgm", "wb");
+        FILE *fp = fopen("out/map.ppm", "wb");
         char header[32];
         ret = snprintf(header, 32, "P6 %lu %lu 255\n", w * 16, h * 16);
         fwrite(header, sizeof(char), ret, fp);
