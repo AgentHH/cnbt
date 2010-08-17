@@ -1,6 +1,61 @@
 #include "render.hpp"
 
 namespace cnbt {
+int write_png_to_file(uint8_t *buf, size_t w, size_t h, const char *filename) {
+    FILE *fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        ERR("Unable to open file \"%s\" for writing\n", filename);
+        return 1;
+    }
+
+    png_structp pngp;
+    png_infop infop;
+
+    pngp = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!pngp) {
+        ERR("png_create_write_struct failed\n");
+        goto cleanup_write_png_pcws;
+    }
+    infop = png_create_info_struct(pngp);
+    if (!infop) {
+        ERR("png_create_write_struct failed\n");
+        goto cleanup_write_png_pcis;
+    }
+    if (setjmp(png_jmpbuf(pngp))) {
+        ERR("error during png_init_io\n");
+        goto cleanup_write_png_error;
+    }
+    png_init_io(pngp, fp);
+    if (setjmp(png_jmpbuf(pngp))) {
+        ERR("error during png_set_IHDR\n");
+        goto cleanup_write_png_error;
+    }
+    png_set_IHDR(pngp, infop, w, h, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    png_write_info(pngp, infop);
+    if (setjmp(png_jmpbuf(pngp))) {
+        ERR("error during png_write_image\n");
+        goto cleanup_write_png_error;
+    }
+    for (size_t i = 0; i < h; i++) {
+        png_write_row(pngp, buf + i*w*3);
+    }
+    if (setjmp(png_jmpbuf(pngp))) {
+        ERR("error during png_write_end\n");
+        goto cleanup_write_png_error;
+    }
+    png_write_end(pngp, NULL);
+
+    printf("write succeeded\n");
+    fclose(fp);
+    return 0;
+
+cleanup_write_png_error:
+cleanup_write_png_pcis:
+    //png_destroy_write_struct(pngp, infop);
+cleanup_write_png_pcws:
+    fclose(fp);
+    return 1;
+}
 
 void render_top_down(struct chunk *c, uint8_t *buf, int32_t x, int32_t z, int32_t w, int32_t h, game::entitymap &em) {
     //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);

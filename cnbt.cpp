@@ -86,13 +86,7 @@ int main(int argc, char *argv[]) {
             cnbt::render_top_down(ci->c, image, (ci->coord.x - cm->min->x), (ci->coord.z - cm->min->z), w, h, em);
         } while ((ci = cm->next()));
 
-        FILE *fp = fopen("out/map.ppm", "wb");
-        char header[32];
-        ret = snprintf(header, 32, "P6 %lu %lu 255\n", w * 16, h * 16);
-        fwrite(header, sizeof(char), ret, fp);
-        fwrite(image, sizeof(uint8_t), w * h * 256 * 3, fp);
-        fclose(fp);
-        free(image);
+        ret = cnbt::write_png_to_file(image, w * 16, h * 16, "out/map.png");
     }
 
     return 0;
