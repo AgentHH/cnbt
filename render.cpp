@@ -46,7 +46,9 @@ int write_png_to_file(uint8_t *buf, size_t w, size_t h, const char *filename) {
     png_write_end(pngp, NULL);
 
     printf("write succeeded\n");
+    png_destroy_write_struct(&pngp, &infop);
     fclose(fp);
+
     return 0;
 
 cleanup_write_png_error:
@@ -93,4 +95,14 @@ void render_top_down(struct chunk *c, uint8_t *buf, int32_t x, int32_t z, int32_
         }
     }
 }
+
+renderer::renderer(struct chunkmanager *cm, rendertype rt = RENDER_TOP_DOWN, uint8_t dir = 0) : cm(cm), rt(rt), dir(dir) {
+
+}
+
+/*uint8_t *renderer::render_all() {
+
+    return NULL;
+}*/
+
 } // end namespace cnbt

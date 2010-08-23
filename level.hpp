@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <assert.h>
 #include <errno.h>
 
@@ -16,6 +18,7 @@ namespace cnbt {
 // {{{ #defines and typedefs
 #define LEVEL_MAIN_FILE "level.dat"
 // }}}
+int find_chunk_files(struct chunkmanager *cm, const char *path);
 // {{{ main level struct
 struct level {
     struct tag *root;
@@ -29,3 +32,4 @@ struct level {
 };
 // }}}
 } // end namespace cnbt
+

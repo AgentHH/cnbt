@@ -5,13 +5,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <sys/types.h>
-#include <dirent.h>
 #include <map>
 #include <deque>
 
 #include "datastream.hpp"
 #include "tagparser.hpp"
+//#include "level.hpp"
 #include "coord.hpp"
 // }}}
 namespace cnbt {
@@ -28,7 +27,6 @@ typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
 typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
 // }}}
 int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, size_t len);
-int find_chunk_files(struct chunkmanager *cm, const char *path);
 // {{{ chunk struct
 struct chunk {
     uint8_t data[CHUNK_DATA_LEN];

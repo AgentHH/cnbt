@@ -18,75 +18,6 @@ int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, size_t len) {
     return w.written();
 }
 
-int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
-    struct stream_eater s((uint8_t *)name, strlen(name));
-    const char *temp;
-    temp = (const char *)s.eat_byte_array(2);
-    if (temp == NULL || strncmp(temp, "c.", 2))
-        return 1;
-
-    *x = s.eat_base36_int();
-
-    temp = (const char *)s.eat_byte_array(1);
-    if (temp == NULL || strncmp(temp, ".", 1))
-        return 1;
-
-    *z = s.eat_base36_int();
-
-    temp = (const char*)s.eat_byte_array(4);
-    if (temp == NULL || strncmp(temp, ".dat", 4))
-        return 1;
-
-    return 0;
-}
-int find_chunk_files(struct chunkmanager *cm, const char *path) {
-    DIR *dir;
-    struct dirent *dirp;
-
-    dir = opendir(path);
-    if (dir == NULL) {
-        printf("Unable to open directory %s\n", path);
-        return 1;
-    }
-
-    while ((dirp = readdir(dir))) {
-        if (dirp->d_type != DT_DIR && dirp->d_type != DT_REG)
-            continue;
-
-        if (dirp->d_type == DT_DIR) {
-            if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) {
-                continue;
-            }
-            size_t newpathlen = strlen(path) + 1 + strlen(dirp->d_name) + 1;
-            char newpath[newpathlen];
-            strncpy(newpath, path, newpathlen);
-            strncat(newpath, "/", newpathlen - strlen(path) - 1);
-            strncat(newpath, dirp->d_name, newpathlen - strlen(path) - 2);
-
-            find_chunk_files(cm, newpath);
-        } else if (dirp->d_type == DT_REG) {
-            int32_t x, z;
-            int ret = parse_chunk_file_name(dirp->d_name, &x, &z);
-            if (ret)
-                continue;
-            //printf("found chunk (%d,%d)\n", x, y);
-
-            struct chunkcoord c(x, z);
-            ret = cm->add_new_chunk(c);
-            if (ret) {
-                printf("Warning: possible duplicate chunk found\n");
-                return ret;
-            }
-        } else {
-            continue;
-        }
-    }
-
-    closedir(dir);
-
-    return 0;
-}
-
 int chunk::init(struct tag *t) {
     struct tag *u;
     // assuming current tag structure of a compound named "Level" in a compound
@@ -183,7 +114,6 @@ chunkmanager::~chunkmanager() {
         struct chunkinfo *ci = (*i).second;
         if (ci)
             delete ci;
-        chunks.erase(i);
     }
 }
 
@@ -219,9 +149,7 @@ int chunkmanager::load_chunk_raw(struct chunkinfo *ci) {
     int namelen = chunkcoord_to_filename(ci->coord, (uint8_t*)buf, 32);
     size_t chunkpathlen = strlen(path) + 1 + namelen;
     char chunkpath[chunkpathlen];
-    strncpy(chunkpath, path, chunkpathlen);
-    strncat(chunkpath, "/", chunkpathlen - strlen(path) - 1);
-    strncat(chunkpath, buf, chunkpathlen - strlen(path) - 2);
+    snprintf(chunkpath, chunkpathlen, "%s/%s", path, buf);
 
     struct tag *t = eat_nbt_file(chunkpath);
     if (!t) {
@@ -233,6 +161,7 @@ int chunkmanager::load_chunk_raw(struct chunkinfo *ci) {
     int ret = c->init(t);
     delete t;
     if (ret) {
+        delete c;
         ERR("Chunk parsing failed\n");
         return 1;
     }

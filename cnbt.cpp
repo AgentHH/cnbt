@@ -65,6 +65,9 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        //cnbt::renderer r(&l.manager);
+        //uint8_t *image = r.render_all();
+
         cnbt::chunkmanager *cm = &l.manager;
         printf("bounding box is (%d,%d) to (%d,%d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
         size_t h = 1 + cm->max->x - cm->min->x; // x is north-south
@@ -87,6 +90,11 @@ int main(int argc, char *argv[]) {
         } while ((ci = cm->next()));
 
         ret = cnbt::write_png_to_file(image, w * 16, h * 16, "out/map.png");
+
+        free(image);
+        for (cnbt::game::entitymap::iterator i = em.begin(); i != em.end(); ++i) {
+            delete((*i).second);
+        }
     }
 
     return 0;
