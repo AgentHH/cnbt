@@ -4,10 +4,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <dirent.h>
+//#include <sys/types.h>
+//#include <dirent.h>
 #include <assert.h>
 #include <errno.h>
+#include <apr-1.0/apr_file_io.h>
+#include <apr-1.0/apr_strings.h>
 
 #include "datastream.hpp"
 #include "tagparser.hpp"

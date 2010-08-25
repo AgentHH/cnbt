@@ -25,31 +25,34 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
     return 0;
 }
 int find_chunk_files(struct chunkmanager *cm, const char *path) {
-    DIR *dir;
-    struct dirent *dirp;
+    apr_dir_t *dir;
+    apr_finfo_t finfo;
+    apr_status_t status;
+    util::pool p;
 
-    dir = opendir(path);
-    if (dir == NULL) {
+    status = apr_dir_open(&dir, path, p);
+    if (status != APR_SUCCESS) {
         printf("Unable to open directory %s\n", path);
         return 1;
     }
 
-    while ((dirp = readdir(dir))) {
-        if (dirp->d_type != DT_DIR && dirp->d_type != DT_REG)
+    while (apr_dir_read(&finfo, APR_FINFO_NAME | APR_FINFO_TYPE, dir) == APR_SUCCESS) {
+        if (finfo.filetype != APR_DIR && finfo.filetype != APR_REG)
             continue;
 
-        if (dirp->d_type == DT_DIR) {
-            if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) {
+        if (finfo.filetype == APR_DIR) {
+            if (!strcmp(finfo.name, ".") || !strcmp(finfo.name, "..")) {
                 continue;
             }
-            size_t newpathlen = strlen(path) + 1 + strlen(dirp->d_name) + 1;
-            char newpath[newpathlen];
-            snprintf(newpath, newpathlen, "%s/%s", path, dirp->d_name);
-
-            find_chunk_files(cm, newpath);
-        } else if (dirp->d_type == DT_REG) {
+            char *newpath;
+            apr_filepath_merge(&newpath, path, finfo.name, APR_FILEPATH_NATIVE, p);
+            int ret = find_chunk_files(cm, newpath);
+            if (ret) {
+                return ret;
+            }
+        } else if (finfo.filetype == APR_REG) {
             int32_t x, z;
-            int ret = parse_chunk_file_name(dirp->d_name, &x, &z);
+            int ret = parse_chunk_file_name(finfo.name, &x, &z);
             if (ret)
                 continue;
             //printf("found chunk (%d,%d)\n", x, y);
@@ -58,33 +61,39 @@ int find_chunk_files(struct chunkmanager *cm, const char *path) {
             ret = cm->add_new_chunk(c);
             if (ret) {
                 printf("Warning: possible duplicate chunk found\n");
-                return ret;
             }
         } else {
             continue;
         }
     }
-    closedir(dir);
+    apr_dir_close(dir);
 
     return 0;
 }
 // {{{ level class methods
-level::level(char *path) : path(path) {
+level::level(char *path) : manager(path) {
+    this->path = strdup(path);
     root = NULL;
-    manager.path = path;
 }
 level::~level() {
+    free(path);
     if (root)
         delete root;
 }
 
 int level::load() {
     if (!path)
-        return 0;
+        return 1;
 
-    size_t filepathlen = strlen(path) + 1 + strlen(LEVEL_MAIN_FILE) + 1;
-    char filepath[filepathlen];
-    snprintf(filepath, filepathlen, "%s/%s", path, LEVEL_MAIN_FILE);
+    apr_status_t status;
+    apr_pool_t *pool;
+
+    status = apr_pool_create(&pool, NULL);
+    if (status != APR_SUCCESS) {
+        return 1;
+    }
+    char *filepath;
+    apr_filepath_merge(&filepath, path, LEVEL_MAIN_FILE, APR_FILEPATH_NATIVE, pool);
 
     struct tag *t = eat_nbt_file(filepath);
     if (t == NULL) {
@@ -95,10 +104,10 @@ int level::load() {
     root = t;
 
     int ret = find_chunk_files(&this->manager, path);
+    apr_pool_destroy(pool);
     if (ret) {
         ERR("Chunk file discovery failed\n");
-        delete t;
-        return 1;
+        return 2;
     }
     return 0;
 }

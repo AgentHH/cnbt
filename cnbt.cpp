@@ -13,10 +13,14 @@
 #include "coord.hpp"
 #include "minecraft.hpp"
 #include "render.hpp"
+#include "util.hpp"
 
 #define ERR(args...) fprintf(stderr, args)
 
 int main(int argc, char *argv[]) {
+    apr_app_initialize(&argc, (const char * const**)&argv, NULL);
+    atexit(apr_terminate);
+
     if (argc < 2) {
         ERR("usage: %s path/to/level\n", argv[0]);
         exit(1);
@@ -52,10 +56,11 @@ int main(int argc, char *argv[]) {
             ERR("need x and z\n");
             exit(1);
         }
+        cnbt::util::pool p;
         int32_t x = strtol(argv[2], NULL, 0);
         int32_t z = strtol(argv[3], NULL, 0);
-        uint8_t buf[32];
-        cnbt::chunkcoord_to_filename(cnbt::chunkcoord(x, z), buf, 32);
+        uint8_t *buf;
+        cnbt::chunkcoord_to_filename(cnbt::chunkcoord(x, z), &buf, p);
         printf("Filename is \"%s\"\n", buf);
     } else {
         cnbt::level l(argv[1]);

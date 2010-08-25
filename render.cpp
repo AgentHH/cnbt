@@ -96,11 +96,11 @@ void render_top_down(struct chunk *c, uint8_t *buf, int32_t x, int32_t z, int32_
     }
 }
 
-renderer::renderer(struct chunkmanager *cm, rendertype rt = RENDER_TOP_DOWN, uint8_t dir = 0) : cm(cm), rt(rt), dir(dir) {
+/*renderer::renderer(struct chunkmanager *cm, rendertype rt = RENDER_TOP_DOWN, uint8_t dir = 0) : cm(cm), rt(rt), dir(dir) {
 
 }
 
-/*uint8_t *renderer::render_all() {
+uint8_t *renderer::render_all() {
 
     return NULL;
 }*/

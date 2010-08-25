@@ -3,8 +3,9 @@
 #define ERR(args...) fprintf(stderr, args)
 
 namespace cnbt {
-int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, size_t len) {
-    struct stream_writer w(name, len);
+int chunkcoord_to_filename(struct chunkcoord c, uint8_t **name, util::pool &p) {
+    *name = new(p) uint8_t[32];
+    struct stream_writer w(*name, 32);
 
     w.write_base36_int((uint32_t)c.x % 64);
     w.write_byte_array((uint8_t*)"/", 1);
@@ -100,11 +101,13 @@ chunkinfo::~chunkinfo() {
         delete c;
 }
 
-chunkmanager::chunkmanager() {
+chunkmanager::chunkmanager(const char *path) {
+    this->path = strdup(path);
     max = NULL;
     min = NULL;
 }
 chunkmanager::~chunkmanager() {
+    free((void*)path);
     if (max)
         delete max;
     if (min)
@@ -145,11 +148,13 @@ int chunkmanager::add_new_chunk(struct chunkcoord c) {
 }
 
 int chunkmanager::load_chunk_raw(struct chunkinfo *ci) {
-    char buf[32];
-    int namelen = chunkcoord_to_filename(ci->coord, (uint8_t*)buf, 32);
-    size_t chunkpathlen = strlen(path) + 1 + namelen;
-    char chunkpath[chunkpathlen];
-    snprintf(chunkpath, chunkpathlen, "%s/%s", path, buf);
+    util::pool p;
+
+    uint8_t *buf;
+    chunkcoord_to_filename(ci->coord, &buf, p);
+
+    char *chunkpath;
+    apr_filepath_merge(&chunkpath, path, (char*)buf, APR_FILEPATH_NATIVE, p);
 
     struct tag *t = eat_nbt_file(chunkpath);
     if (!t) {

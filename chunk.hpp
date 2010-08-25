@@ -7,11 +7,12 @@
 #include <assert.h>
 #include <map>
 #include <deque>
+#include <apr-1.0/apr_file_info.h>
 
 #include "datastream.hpp"
 #include "tagparser.hpp"
-//#include "level.hpp"
 #include "coord.hpp"
+#include "util.hpp"
 // }}}
 namespace cnbt {
 // {{{ #defines and typedefs
@@ -26,7 +27,7 @@ namespace cnbt {
 typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
 typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
 // }}}
-int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, size_t len);
+int chunkcoord_to_filename(struct chunkcoord c, uint8_t **name, util::pool &p);
 // {{{ chunk struct
 struct chunk {
     uint8_t data[CHUNK_DATA_LEN];
@@ -61,12 +62,12 @@ struct chunkmanager {
     std::deque<struct chunkinfo*> loadedchunks;
     const char *path;
 
-    chunkmanager();
+    chunkmanager(const char *path);
     ~chunkmanager();
     int add_new_chunk(struct chunkcoord c);
     int load_chunk_raw(struct chunkinfo *c);
     int load_chunk(struct chunkinfo *c);
-    //int set_load_strategy(); // for oblique etc levels
+    int set_load_strategy(void (*strat)(chunkcoord selected, std::deque<chunkcoord> &load)); // for oblique etc levels
     struct chunkinfo *start();
     struct chunkinfo *next();
 };

@@ -13,7 +13,7 @@
 #include "nbtconstants.hpp"
 // }}}
 namespace cnbt {
-#define STREAM_WRITER_BUFSIZE 16384
+#define STREAM_WRITER_BUFSIZE 4096
 // {{{ evil hacks to support network floating point values
 float ntohf(float f);
 double ntohd(double d);

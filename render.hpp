@@ -27,13 +27,12 @@ enum rendertype {
 
 struct renderer {
     struct chunkmanager *cm;
-    rendertype rt;
     uint8_t dir; // 0 is north, increases in clockwise direction
 
     renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir);
 
     std::pair<size_t, size_t> image_bounds(int32_t x, int32_t z, size_t w, size_t h);
-    uint8_t render(int32_t x, int32_t z, size_t w, size_t h);
+    uint8_t *render(int32_t x, int32_t z, size_t w, size_t h);
 };
 
 } // end namespace cnbt
