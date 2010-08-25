@@ -194,6 +194,26 @@ int chunkmanager::load_chunk(struct chunkinfo *ci) {
     return 0;
 }
 
+bool chunkmanager::chunk_exists(int32_t x, int32_t z) {
+    struct chunkcoord c(x, z);
+    return chunk_exists(c);
+}
+
+bool chunkmanager::chunk_exists(struct chunkcoord c) {
+    return chunks.find(c) != chunks.end();
+}
+
+struct chunkinfo *chunkmanager::get_chunk(struct chunkcoord c) {
+    chunkmap::iterator i = chunks.find(c);
+    if (i != chunks.end()) {
+        struct chunkinfo *ci = (*i).second;
+        load_chunk(ci);
+        return ci;
+    }
+    return NULL;
+}
+
+#if 0
 struct chunkinfo *chunkmanager::start() {
     // for now, just uses an internal chunkmap iterator
     if (chunks.size() < 1)
@@ -217,4 +237,5 @@ struct chunkinfo *chunkmanager::next() {
     ++mapiterator;
     return temp;
 }
+#endif
 } // end namespace cnbt

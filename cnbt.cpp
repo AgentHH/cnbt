@@ -70,36 +70,19 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        //cnbt::renderer r(&l.manager);
-        //uint8_t *image = r.render_all();
-
-        cnbt::chunkmanager *cm = &l.manager;
-        printf("bounding box is (%d,%d) to (%d,%d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
-        size_t h = 1 + cm->max->x - cm->min->x; // x is north-south
-        size_t w = 1 + cm->max->z - cm->min->z; // z is east-west
-        printf("size of box is (%ld,%ld)\n", w, h);
-        printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(w * h));
-
-        uint8_t *image = (uint8_t*)calloc(w * h * 256 * 3, sizeof(uint8_t));
-        if (!image) {
-            ERR("Failed to allocate image\n");
-            exit(1);
-        }
-
-        cnbt::game::entitymap em;
-        cnbt::game::init_blocks(em);
-
-        cnbt::chunkinfo *ci = cm->start();
-        do {
-            cnbt::render_top_down(ci->c, image, (ci->coord.x - cm->min->x), (ci->coord.z - cm->min->z), w, h, em);
-        } while ((ci = cm->next()));
-
-        ret = cnbt::write_png_to_file(image, w * 16, h * 16, "out/map.png");
+        cnbt::renderer *r = cnbt::get_renderer(&l.manager, cnbt::RENDER_TOP_DOWN, DIR_NORTH);
+        uint8_t *image = r->render_all();
+        cnbt::coord size = r->image_size();
+        cnbt::write_png_to_file(image, size.first, size.second, "out/map.png");
 
         free(image);
+        delete r;
+
+#if 0
         for (cnbt::game::entitymap::iterator i = em.begin(); i != em.end(); ++i) {
             delete((*i).second);
         }
+#endif
     }
 
     return 0;

@@ -7,6 +7,9 @@
 #include <assert.h>
 // }}}
 namespace cnbt {
+typedef std::pair<size_t, size_t> coord;
+typedef std::pair<int32_t, int32_t> scoord;
+
 struct chunkcoord {
     int32_t x, z;
 

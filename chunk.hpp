@@ -64,11 +64,16 @@ struct chunkmanager {
 
     chunkmanager(const char *path);
     ~chunkmanager();
+    bool chunk_exists(int32_t x, int32_t z);
+    bool chunk_exists(struct chunkcoord c);
+    struct chunkinfo *get_chunk(struct chunkcoord c);
     int add_new_chunk(struct chunkcoord c);
     int load_chunk_raw(struct chunkinfo *c);
     int load_chunk(struct chunkinfo *c);
     int set_load_strategy(void (*strat)(chunkcoord selected, std::deque<chunkcoord> &load)); // for oblique etc levels
+#if 0
     struct chunkinfo *start();
     struct chunkinfo *next();
+#endif
 };
 } // end namespace cnbt
