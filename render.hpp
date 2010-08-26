@@ -24,8 +24,10 @@
 namespace cnbt {
 int write_png_to_file(uint8_t *buf, size_t w, size_t h, const char *filename);
 
-// all of the render functions expect x, z, w, and h to be in chunk coordinates
-// w and h are used to indicate how many chunks wide / tall the image buffer is
+int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
+void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em);
+
+int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
 void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em);
 
 enum rendertype {
@@ -45,6 +47,15 @@ struct renderer {
     virtual coord image_size() = 0;
     virtual uint8_t *render(scoord origin, coord dim) = 0;
     virtual uint8_t *render_all() = 0;
+};
+
+struct obliquerenderer : renderer {
+    obliquerenderer(struct chunkmanager *cm, uint8_t dir);
+
+    virtual coord image_size(scoord origin, coord dim);
+    virtual coord image_size();
+    virtual uint8_t *render(scoord origin, coord dim);
+    virtual uint8_t *render_all();
 };
 
 struct topdownrenderer : renderer {

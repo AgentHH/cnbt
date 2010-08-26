@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <byteswap.h>
 #include <assert.h>
 #include <zlib.h>
-#include <arpa/inet.h>
+#ifdef __linux
+#  include <byteswap.h>
+#endif
 
 #include "nbtconstants.hpp"
 // }}}
@@ -17,10 +18,17 @@ namespace cnbt {
 // {{{ evil hacks to support network floating point values
 float ntohf(float f);
 double ntohd(double d);
+uint16_t ntohs(uint16_t i);
+uint32_t ntohl(uint32_t i);
 uint64_t ntohll(uint64_t i);
-float htonf(float f);
-double htond(double d);
-uint64_t htonll(uint64_t i);
+#define htonf(expr) ntohf(expr)
+#define htond(expr) ntohd(expr)
+#define htons(expr) ntohs(expr)
+#define htonl(expr) ntohl(expr)
+#define htonll(expr) ntohll(expr)
+//float htonf(float f);
+//double htond(double d);
+//uint64_t htonll(uint64_t i);
 // }}}
 // {{{ stream classes to simplify extracting and writing data
 struct stream_eater {

@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
-#include <arpa/inet.h>
 #include <vector>
 
 #include "tagparser.hpp"
@@ -70,7 +69,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        cnbt::renderer *r = cnbt::get_renderer(&l.manager, cnbt::RENDER_TOP_DOWN, DIR_NORTH);
+        cnbt::renderer *r = cnbt::get_renderer(&l.manager, cnbt::RENDER_OBLIQUE, DIR_NORTH);
         uint8_t *image = r->render_all();
         cnbt::coord size = r->image_size();
         cnbt::write_png_to_file(image, size.first, size.second, "out/map.png");

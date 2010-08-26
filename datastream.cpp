@@ -4,10 +4,6 @@
 
 namespace cnbt {
 // {{{ evil hacks to support network floating point values
-#define htonf(A...)  ntohf(A)
-#define htond(A...)  ntohd(A)
-#define htonll(A...) ntohll(A)
-
 float ntohf(float f) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     union {
@@ -16,7 +12,11 @@ float ntohf(float f) {
     };
 
     x = f;
+# ifdef _MSC_VER
+    y = __byteswap_uint32(y);
+# elif defined(__linux)
     y = __bswap_32(y);
+# endif
     return x;
 #else
     return f;
@@ -30,15 +30,45 @@ double ntohd(double d) {
     };
 
     x = d;
+# ifdef _MSC_VER
+    y = __byteswap_uint64(y);
+# elif defined(__linux)
     y = __bswap_64(y);
+# endif
     return x;
 #else
     return d;
 #endif
 }
+uint16_t ntohs(uint16_t i) {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+# ifdef _MSC_VER
+    return __byteswap_uint16(i);
+# elif defined(__linux)
+    return __bswap_16(i);
+# endif
+#else
+    return i;
+#endif
+}
+uint32_t ntohl(uint32_t i) {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+# ifdef _MSC_VER
+    return __byteswap_uint32(i);
+# elif defined(__linux)
+    return __bswap_32(i);
+# endif
+#else
+    return i;
+#endif
+}
 uint64_t ntohll(uint64_t i) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
+# ifdef _MSC_VER
+    return __byteswap_uint64(i);
+# elif defined(__linux)
     return __bswap_64(i);
+# endif
 #else
     return i;
 #endif
