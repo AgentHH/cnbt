@@ -48,18 +48,7 @@ struct renderer {
 };
 
 struct topdownrenderer : renderer {
-    topdownrenderer(struct chunkmanager *cm, uint8_t dir) : renderer(cm, RENDER_TOP_DOWN, dir) {
-        switch (dir) {
-            case DIR_NORTH:
-            case DIR_EAST:
-            case DIR_SOUTH:
-            case DIR_WEST:
-                break;
-            default:
-                dir = DIR_NORTH;
-                break;
-        }
-    }
+    topdownrenderer(struct chunkmanager *cm, uint8_t dir);
 
     virtual coord image_size(scoord origin, coord dim);
     virtual coord image_size();

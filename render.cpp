@@ -68,7 +68,7 @@ struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t di
     }
 }
 
-int blockcoord_to_image(coord chunk, coord dim, coord imagesize, coord block, uint8_t dir, size_t *offset) {
+int blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset) {
     // x, z are chunk coordinates; 0,0 is the origin
     size_t x = chunk.first, z = chunk.second;
     // w, h are number of chunks in the x and z directions
@@ -76,7 +76,7 @@ int blockcoord_to_image(coord chunk, coord dim, coord imagesize, coord block, ui
     // pw, ph are the pixel widths and heights of the image buffer
     size_t pi = imagesize.first, pj = imagesize.second;
     // bx, bz are block x and y
-    size_t bx = block.first, bz = block.second;
+    size_t bx = block.x, bz = block.z;
 
     size_t i, j, ci, cj;
 
@@ -129,7 +129,7 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
         for (int _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
             game::color pixel(255, 255, 255);
             size_t offset;
-            blockcoord_to_image(chunk, dim, imagesize, coord(_x, _z), dir, &offset);
+            blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, 0, _z), dir, &offset);
             uint8_t *dest = buf + offset * 3;
             for (int _y = 0; _y < 128; _y++) {
                 uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
@@ -151,6 +151,20 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
             dest[1] = pixel.g;
             dest[2] = pixel.b;
         }
+    }
+}
+
+
+topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir) : renderer(cm, RENDER_TOP_DOWN, dir) {
+    switch (dir) {
+        case DIR_NORTH:
+        case DIR_EAST:
+        case DIR_SOUTH:
+        case DIR_WEST:
+            break;
+        default:
+            dir = DIR_NORTH;
+            break;
     }
 }
 
@@ -226,10 +240,10 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
     return image;
 }
 uint8_t *topdownrenderer::render_all() {
-    size_t nx, nw;
+    size_t nx, nz;
     nx = 1 + cm->max->x - cm->min->x;
-    nw = 1 + cm->max->z - cm->min->z;
-    return render(scoord(cm->min->x, cm->min->z), coord(w, h));
+    nz = 1 + cm->max->z - cm->min->z;
+    return render(scoord(cm->min->x, cm->min->z), coord(nx, nz));
 }
 
 } // end namespace cnbt
