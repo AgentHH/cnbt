@@ -20,6 +20,12 @@ struct color {
 
     int add_above(struct color c);
 };
+struct memorycolor {
+    uint8_t *c;
+    memorycolor(uint8_t *c) : c(c) {}
+
+    int add_above(struct color c);
+};
 struct entity {
     uint16_t id;
     const char *name;

@@ -76,7 +76,7 @@ struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t di
     }
 }
 // {{{ oblique renderer
-int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset) {
+int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offsetside, size_t *offsettop) {
     // x, z are chunk coordinates; 0,0 is the origin
     size_t x = chunk.first, z = chunk.second;
     // w, h are number of chunks in the x and z directions
@@ -103,9 +103,9 @@ int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockco
             break;
         case DIR_SOUTH:
             ci = z;
-            cj = x;
+            cj = nx - x - 1;
             i = bz;
-            j = bx;
+            j = BLOCKS_PER_X - bx - 1;
             break;
         case DIR_WEST:
             ci = nx - x - 1;
@@ -114,7 +114,8 @@ int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockco
             j = BLOCKS_PER_Z - bz - 1;
             break;
         default:
-            *offset = 0;
+            *offsetside = 0;
+            *offsettop = 0;
             return 1;
     }
     j += BLOCKS_PER_Y - by - 1;
@@ -122,7 +123,8 @@ int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockco
     ci *= BLOCKS_PER_Z;
     cj *= BLOCKS_PER_X;
 
-    *offset = (ci + pi * cj) + (i + pi * j);
+    *offsetside = (ci + pi * cj) + (i + pi * (j + 1));
+    *offsettop = (ci + pi * cj) + (i + pi * j);
 
     return 0;
 }
@@ -138,13 +140,14 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
     for (int _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
         for (int _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
             for (int _y = 0; _y < 128; _y++) {
-                size_t offset;
-                game::color pixel(255, 255, 255);
                 uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
                 if (id == 0)
                     continue;
-                oblique_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, _y, _z), dir, &offset);
-                uint8_t *dest = buf + offset * 3;
+
+                size_t offsetside, offsettop;
+                oblique_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, _y, _z), dir, &offsetside, &offsettop);
+                uint8_t *destside = buf + offsetside * 3;
+                uint8_t *desttop = buf + offsettop * 3;
 
                 struct game::block *b = static_cast<struct game::block *>(em[id]);
                 if (b == NULL) {
@@ -152,18 +155,25 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
                     continue;
                 }
 
-                /*if (b->onecolor)
-                    pixel.add_above(b->brightcolor);
-                else
-                    pixel.add_above(game::interpolate_color(b->darkcolor, b->brightcolor, _y));
-                */
+                game::color pixel;
                 if (b->onecolor)
                     pixel = b->brightcolor;
                 else
                     pixel = game::interpolate_color(b->darkcolor, b->brightcolor, _y);
-                dest[0] = pixel.r;
-                dest[1] = pixel.g;
-                dest[2] = pixel.b;
+
+                game::color top(desttop[0], desttop[1], desttop[2]);
+                top.add_above(pixel);
+                desttop[0] = top.r;
+                desttop[1] = top.g;
+                desttop[2] = top.b;
+
+                pixel.add_above(game::color(0, 0, 0, 128));
+
+                game::color side(destside[0], destside[1], destside[2]);
+                side.add_above(pixel);
+                destside[0] = side.r;
+                destside[1] = side.g;
+                destside[2] = side.b;
             }
         }
     }
@@ -288,9 +298,9 @@ int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockc
             break;
         case DIR_SOUTH:
             ci = z;
-            cj = x;
+            cj = nx - x - 1;
             i = bz;
-            j = bx;
+            j = BLOCKS_PER_X - bx - 1;
             break;
         case DIR_WEST:
             ci = nx - x - 1;
