@@ -140,12 +140,22 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
     for (int _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
         for (int _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
             for (int _y = 0; _y < 128; _y++) {
-                uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
+                uint8_t id;
+                int _a, _b;
+
+                if (dir == DIR_NORTH || dir == DIR_EAST) { // this is a hideous hack
+                    _a = _x;
+                    _b = _z;
+                } else {
+                    _a = BLOCKS_PER_X - _x - 1;
+                    _b = BLOCKS_PER_Z - _z - 1;
+                }
+                id = c->blocks[_b * 2048 + _a * 128 + _y];
                 if (id == 0)
                     continue;
 
                 size_t offsetside, offsettop;
-                oblique_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, _y, _z), dir, &offsetside, &offsettop);
+                oblique_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_b, _y, _a), dir, &offsetside, &offsettop);
                 uint8_t *destside = buf + offsetside * 3;
                 uint8_t *desttop = buf + offsettop * 3;
 
@@ -252,11 +262,19 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
         for (size_t _x = 0; _x < nx; _x++) {
-            struct chunkcoord c(_x + x, _z + z);
+            size_t _a, _b;
+            if (dir == DIR_NORTH || dir == DIR_EAST) {
+                _a = _x;
+                _b = _z;
+            } else {
+                _a = nx - _x - 1;
+                _b = nz - _z - 1;
+            }
+            struct chunkcoord c(_a + x, _b + z);
             if (cm->chunk_exists(c)) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
-                render_oblique(ci->c, image, coord(_x, _z), dim, imagesize, dir, em);
+                render_oblique(ci->c, image, coord(_a, _b), dim, imagesize, dir, em);
             }
         }
     }
