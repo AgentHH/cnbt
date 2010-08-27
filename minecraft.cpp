@@ -96,7 +96,7 @@ int init_blocks(entitymap &map) {
         {17, "log",                    false, color(192, 148, 64), color(96, 74, 32)},
         //{18, "leaves",                 true,  color(96, 203, 96, 64)}, // good for oblique
         {18, "leaves",                 true,  color(32, 103, 32, 64)}, // good for top-down
-        {19, "sponge",                 true,  }, // never seen in game
+        {19, "sponge",                 true,  color(230, 230, 0)},
         {20, "glass",                  true,  color(0, 0, 0, 0)},
         {35, "cloth",                  true,  color(213, 213, 213)},
         {37, "yellow flower",          true,  color(230, 232, 28, 192)},
@@ -147,6 +147,7 @@ int init_blocks(entitymap &map) {
         {82, "clay",                   true,  color(140, 147, 117)},
         {83, "reed",                   true,  color(177, 244, 170)},
         {84, "jukebox",                true,  },
+        {85, "fence",                  true,  color(0, 0, 0, 255)},
         {255, NULL,                    true,  color(255, 255, 255)},
     };
 
