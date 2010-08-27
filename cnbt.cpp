@@ -16,12 +16,69 @@
 
 #define ERR(args...) fprintf(stderr, args)
 
-int main(int argc, char *argv[]) {
+int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendertype *rt, uint8_t *dir) {
+    int i;
+    *rt = cnbt::RENDER_TOP_DOWN;
+    *dir = DIR_NORTH;
+    *world = NULL;
+    *out = NULL;
+
+    for (i = 0; i < argc; i++) {
+        if (!strcmp(argv[i], "-d")) {
+            i++;
+            if (strlen(argv[i]) == 1) {
+                switch (argv[i][0]) {
+                    case 'n':
+                        *dir = DIR_NORTH;
+                        continue;
+                    case 's':
+                        *dir = DIR_SOUTH;
+                        continue;
+                    case 'e':
+                        *dir = DIR_EAST;
+                        continue;
+                    case 'w':
+                        *dir = DIR_WEST;
+                        continue;
+                    default:
+                        break;
+                }
+            }
+            ERR("Invalid direction \"%s\" specified\n", argv[i]);
+            return 1;
+        } else if (!strcmp(argv[i], "-r")) {
+            i++;
+            if (!strcmp(argv[i], "topdown")) {
+                *rt = cnbt::RENDER_TOP_DOWN;
+            } else if (!strcmp(argv[i], "oblique")) {
+                *rt = cnbt::RENDER_OBLIQUE;
+            } else {
+                ERR("Invalid rendertype \"%s\" specified\n", argv[i]);
+                return 1;
+            }
+        } else if (*out) {
+            ERR("Too many files specified on command-line\n");
+            return 1;
+        } else if (*world) {
+            *out = argv[i];
+            printf("got output %s\n", *out);
+        } else {
+            *world = argv[i];
+            printf("got directory %s\n", *world);
+        }
+    }
+
+    return 0;
+}
+
+int main(int argc, char **argv) {
     apr_app_initialize(&argc, (const char * const**)&argv, NULL);
     atexit(apr_terminate);
 
     if (argc < 2) {
-        ERR("usage: %s path/to/level\n", argv[0]);
+        ERR("usage: %s [-d dir] [-r rendertype] path/to/level output.png\n"
+"valid dirs are: n s e w\n"
+"valid rendertypes are: topdown oblique\n", argv[0]);
         exit(1);
     }
     if (!strcmp(argv[1], "-f")) { // for testing NBT read / write
@@ -62,17 +119,26 @@ int main(int argc, char *argv[]) {
         cnbt::chunkcoord_to_filename(cnbt::chunkcoord(x, z), &buf, p);
         printf("Filename is \"%s\"\n", buf);
     } else {
-        cnbt::level l(argv[1]);
-        int ret = l.load();
+        char *name, *out;
+        cnbt::rendertype rt;
+        uint8_t dir;
+        int ret;
+
+        ret = parse_options(argc - 1, argv + 1, &name, &out, &rt, &dir);
+        if (ret)
+            return ret;
+
+        cnbt::level l(name);
+        ret = l.load();
         if (ret) {
             printf("level.load() failed\n");
             return 1;
         }
 
-        cnbt::renderer *r = cnbt::get_renderer(&l.manager, cnbt::RENDER_OBLIQUE, DIR_SOUTH);
+        cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir);
         uint8_t *image = r->render_all();
         cnbt::coord size = r->image_size();
-        cnbt::write_png_to_file(image, size.first, size.second, "out/map.png");
+        cnbt::write_png_to_file(image, size.first, size.second, out);
 
         free(image);
         delete r;
