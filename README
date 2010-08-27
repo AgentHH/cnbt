@@ -1,0 +1,8 @@
+This is version 0.0.1 of cnbt, released under the GPLv3.
+
+It uses libpng, zlib, and libapr (the Apache Portable Runtime).
+
+To edit colors:
+- Muck around in minecraft.cpp for block colors.
+- To change the level of grey applied to the side of blocks in
+      oblique, look at line 196 of render.cpp.
