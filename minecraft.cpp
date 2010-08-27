@@ -78,7 +78,8 @@ int init_blocks(entitymap &map) {
         {15, "iron ore",               true,  color(158, 141, 112)},
         {16, "coal ore",               true,  color(38, 38, 38)},
         {17, "log",                    false, color(192, 148, 64), color(96, 74, 32)},
-        {18, "leaves",                 true,  color(32, 103, 32, 64)},
+        //{18, "leaves",                 true,  color(96, 203, 96, 64)}, // good for oblique
+        {18, "leaves",                 true,  color(32, 103, 32, 64)}, // good for top-down
         {19, "sponge",                 true,  }, // never seen in game
         {20, "glass",                  true,  color(0, 0, 0, 0)},
         {35, "cloth",                  true,  color(213, 213, 213)},
