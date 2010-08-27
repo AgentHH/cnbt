@@ -68,6 +68,11 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
         }
     }
 
+    if (*world == NULL || *out == NULL) {
+        ERR("You must supply both the map directory and the output file\n");
+        return 1;
+    }
+
     return 0;
 }
 
