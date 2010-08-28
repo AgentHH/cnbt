@@ -197,7 +197,7 @@ int chunkmanager::load_chunk(struct chunkinfo *ci) {
 
     int ret = load_chunk_raw(ci);
     if (ret) {
-        return NULL;
+        return 1;
     }
     while (loadedchunks.size() > CHUNKS_MAX_LOADED) {
         struct chunkinfo *temp = loadedchunks.front();
@@ -223,7 +223,10 @@ struct chunkinfo *chunkmanager::get_chunk(struct chunkcoord c) {
     chunkmap::iterator i = chunks.find(c);
     if (i != chunks.end()) {
         struct chunkinfo *ci = (*i).second;
-        load_chunk(ci);
+        int ret = load_chunk(ci);
+        if (ret) {
+            return NULL;
+        }
         return ci;
     }
     return NULL;

@@ -527,25 +527,47 @@ void print_tag_tree(struct tag *t) {
 // {{{ helper function to eat an NBT file and return the tree
 struct tag *eat_nbt_file(char *filename) {
     // these are hacks, see tagparser.hpp
-    uint8_t data[NBT_BUFFER_SIZE];
+    uint8_t *data;
     int ret;
+    size_t len;
 
     gzFile fp = gzopen(filename, "rb");
     if (!fp) {
         ERR("Unable to open file \"%s\": %s\n", filename, strerror(errno));
         return NULL;
     }
-    ret = gzread(fp, data, sizeof(uint8_t) * NBT_BUFFER_SIZE);
-    gzclose(fp);
-    if (!ret) {
-        ERR("No data returned while reading %s\n", filename);
-        return NULL;
-    } else if (ret == NBT_BUFFER_SIZE) {
-        ERR("File was longer than %d\n", NBT_BUFFER_SIZE);
+
+    len = 0;
+    data = (uint8_t*)malloc(sizeof(uint8_t) * NBT_BUFFER_SIZE);
+    if (!data) {
+        ERR("Unable to allocate memory for file\n");
+        gzclose(fp);
         return NULL;
     }
+    while (1) {
+        ret = gzread(fp, data + len, sizeof(uint8_t) * NBT_BUFFER_SIZE);
+        if (ret == -1) {
+            ERR("Error in reading from file\n");
+            gzclose(fp);
+            return NULL;
+        } else if (!ret) {
+            break;
+        } else if (ret < NBT_BUFFER_SIZE) {
+            len += ret;
+            break;
+        }
+        len += NBT_BUFFER_SIZE;
+        data = (uint8_t*)realloc(data, len + NBT_BUFFER_SIZE);
+        if (!data) {
+            ERR("Unable to reallocate memory for file\n");
+            gzclose(fp);
+            return NULL;
+        }
+    }
+    gzclose(fp);
 
-    struct tag *t = parse_tags(data, ret);
+    struct tag *t = parse_tags(data, len);
+    free(data);
     if (t == NULL) {
         ERR("Error parsing tags from file\n");
         return NULL;

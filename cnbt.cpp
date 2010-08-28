@@ -158,6 +158,10 @@ int main(int argc, char **argv) {
 
         cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir);
         uint8_t *image = r->render_all();
+        if (!image) {
+            ERR("Unable to render image\n");
+            return 1;
+        }
         cnbt::coord size = r->image_size();
         cnbt::write_png_to_file(image, size.first, size.second, out);
 

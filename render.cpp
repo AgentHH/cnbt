@@ -290,6 +290,10 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
             if (cm->chunk_exists(c)) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
+                if (!ci) {
+                    free(image);
+                    return NULL;
+                }
                 render_oblique(ci->c, image, coord(_a, _b), dim, imagesize, dir, em);
             }
         }
@@ -468,6 +472,10 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
             if (cm->chunk_exists(c)) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
+                if (!ci) {
+                    free(image);
+                    return NULL;
+                }
                 render_top_down(ci->c, image, coord(_x, _z), dim, imagesize, dir, em);
             }
         }
