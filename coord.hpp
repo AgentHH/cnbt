@@ -16,7 +16,7 @@
 */
 #pragma once
 // {{{ #includes
-#include <stdint.h>
+#include "platform.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -16,13 +16,23 @@
 */
 #pragma once
 // {{{ #includes
-#include <stdint.h>
+#include "platform.hpp"
 #include <stdlib.h>
 #include <stdio.h>
-#include <tr1/unordered_map>
+#if defined(__GNUC__) && __GNUC__ > 3
+# include <tr1/unordered_map>
+#else
+# include <map>
+#endif
 // }}}
 namespace cnbt {
 namespace game {
+
+#if defined(__GNUC__) && __GNUC__ > 3
+    typedef std::tr1::unordered_map<uint16_t, struct entity*> entitymap;
+#else
+    typedef std::map<uint16_t, struct entity*> entitymap;
+#endif
 
 struct color {
     uint8_t r;
@@ -57,8 +67,6 @@ struct block : entity {
     block(uint16_t id, const char *name, struct color brightcolor, struct color darkcolor, bool onecolor) :
         entity(id, name), brightcolor(brightcolor), darkcolor(darkcolor), onecolor(onecolor) {}
 };
-
-typedef std::tr1::unordered_map<uint16_t, struct entity*> entitymap;
 
 struct color interpolate_color(struct color x, struct color y, uint8_t pos);
 int init_blocks(entitymap &map);

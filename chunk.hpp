@@ -16,7 +16,7 @@
 */
 #pragma once
 // {{{ #includes
-#include <stdint.h>
+#include "platform.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,7 +24,6 @@
 #include <map>
 #include <deque>
 
-#include "platform.hpp"
 #include "datastream.hpp"
 #include "tagparser.hpp"
 #include "coord.hpp"

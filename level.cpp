@@ -41,6 +41,54 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
     return 0;
 }
 
+#ifdef _WIN32
+int find_chunk_files(struct chunkmanager *cm, const char *path) {
+    WIN32_FIND_DATA finddata;
+    HANDLE handle;
+
+    char *searchpath;
+    filepath_merge(&searchpath, path, "*");
+    handle = FindFirstFile(searchpath, &finddata);
+    free(searchpath);
+    if (handle == INVALID_HANDLE_VALUE) {
+        printf("Unable to open directory %s\n", searchpath);
+        return 1;
+    }
+
+    do {
+        if (finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (!strcmp(finddata.cFileName, ".") || !strcmp(finddata.cFileName, "..")) {
+                continue;
+            }
+            char *newpath;
+            filepath_merge(&newpath, path, finddata.cFileName);
+            int ret = find_chunk_files(cm, newpath);
+            free(newpath);
+            if (ret) {
+                FindClose(handle);
+                return ret;
+            }
+        } else if (finddata.dwFileAttributes & (FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY)) {
+            int32_t x, z;
+            int ret = parse_chunk_file_name(finddata.cFileName, &x, &z);
+            if (ret)
+                continue;
+            //printf("found chunk (%d,%d)\n", x, y);
+
+            struct chunkcoord c(x, z);
+            ret = cm->add_new_chunk(c);
+            if (ret) {
+                printf("Warning: possible duplicate chunk found\n");
+            }
+        } else {
+            continue;
+        }
+    } while (FindNextFile(handle, &finddata) != 0);
+
+    FindClose(handle);
+    return 0;
+}
+#else
 int find_chunk_files(struct chunkmanager *cm, const char *path) {
     DIR *dir;
     struct dirent *dirp;
@@ -87,6 +135,7 @@ int find_chunk_files(struct chunkmanager *cm, const char *path) {
 
     return 0;
 }
+#endif
 // {{{ level class methods
 level::level(char *path) : manager(path) {
     this->path = strdup(path);

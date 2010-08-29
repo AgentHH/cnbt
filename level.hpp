@@ -16,7 +16,7 @@
 */
 #pragma once
 // {{{ #includes
-#include <stdint.h>
+#include "platform.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,8 +24,10 @@
 #include <dirent.h>
 #include <assert.h>
 #include <errno.h>
+#ifdef _WIN32
+# include <windows.h>
+#endif
 
-#include "platform.hpp"
 #include "datastream.hpp"
 #include "tagparser.hpp"
 #include "chunk.hpp"
