@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <zlib.h>
+#include <algorithm>
 #ifdef __linux
 #  include <byteswap.h>
 #endif

@@ -18,6 +18,17 @@
 
 #define ERR(args...) fprintf(stderr, args)
 
+namespace {
+    void byteswap(uint8_t *data, size_t bytes) {
+        int i = 0, j = bytes - 1;
+        while (i < j) {
+            std::swap(data[i], data[j]);
+            i++;
+            j--;
+        }
+    }
+}
+
 namespace cnbt {
 // {{{ evil hacks to support network floating point values
 float ntohf(float f) {
@@ -32,6 +43,8 @@ float ntohf(float f) {
     y = __byteswap_uint32(y);
 # elif defined(__linux)
     y = __bswap_32(y);
+# else
+    byteswap((uint8_t*)&y, sizeof(uint32_t));
 # endif
     return x;
 #else
@@ -50,6 +63,8 @@ double ntohd(double d) {
     y = __byteswap_uint64(y);
 # elif defined(__linux)
     y = __bswap_64(y);
+# else
+    byteswap((uint8_t*)&y, sizeof(uint64_t));
 # endif
     return x;
 #else
@@ -62,6 +77,9 @@ uint16_t ntohs(uint16_t i) {
     return __byteswap_uint16(i);
 # elif defined(__linux)
     return __bswap_16(i);
+# else
+    byteswap((uint8_t*)&i, sizeof(uint16_t));
+    return i;
 # endif
 #else
     return i;
@@ -73,6 +91,9 @@ uint32_t ntohl(uint32_t i) {
     return __byteswap_uint32(i);
 # elif defined(__linux)
     return __bswap_32(i);
+# else
+    byteswap((uint8_t*)&i, sizeof(uint32_t));
+    return i;
 # endif
 #else
     return i;
@@ -84,6 +105,9 @@ uint64_t ntohll(uint64_t i) {
     return __byteswap_uint64(i);
 # elif defined(__linux)
     return __bswap_64(i);
+# else
+    byteswap((uint8_t*)&i, sizeof(uint64_t));
+    return i;
 # endif
 #else
     return i;
