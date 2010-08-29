@@ -40,6 +40,7 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
 
     return 0;
 }
+
 int find_chunk_files(struct chunkmanager *cm, const char *path) {
     apr_dir_t *dir;
     apr_finfo_t finfo;
@@ -61,8 +62,9 @@ int find_chunk_files(struct chunkmanager *cm, const char *path) {
                 continue;
             }
             char *newpath;
-            apr_filepath_merge(&newpath, path, finfo.name, APR_FILEPATH_NATIVE, p);
+            filepath_merge(&newpath, path, finfo.name);
             int ret = find_chunk_files(cm, newpath);
+            free(newpath);
             if (ret) {
                 return ret;
             }
@@ -101,17 +103,10 @@ int level::load() {
     if (!path)
         return 1;
 
-    apr_status_t status;
-    apr_pool_t *pool;
-
-    status = apr_pool_create(&pool, NULL);
-    if (status != APR_SUCCESS) {
-        return 1;
-    }
     char *filepath;
-    apr_filepath_merge(&filepath, path, LEVEL_MAIN_FILE, APR_FILEPATH_NATIVE, pool);
-
+    filepath_merge(&filepath, path, LEVEL_MAIN_FILE);
     struct tag *t = eat_nbt_file(filepath);
+    free(filepath);
     if (t == NULL) {
         ERR("Tag parsing failed\n");
         return 1;
@@ -120,7 +115,6 @@ int level::load() {
     root = t;
 
     int ret = find_chunk_files(&this->manager, path);
-    apr_pool_destroy(pool);
     if (ret) {
         ERR("Chunk file discovery failed\n");
         return 2;

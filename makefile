@@ -1,8 +1,8 @@
 CXX=g++
 CXXFLAGS=-Wall -O2
 LDFLAGS=-lz -lpng -lapr-1
-DEPS=util.hpp datastream.hpp tagparser.hpp level.hpp coord.hpp chunk.hpp render.hpp nbtconstants.hpp minecraft.hpp makefile
-OBJS=datastream.o tagparser.o chunk.o level.o minecraft.o render.o cnbt.o
+DEPS=util.hpp datastream.hpp tagparser.hpp level.hpp coord.hpp chunk.hpp render.hpp nbtconstants.hpp minecraft.hpp platform.hpp makefile
+OBJS=platform.o datastream.o tagparser.o chunk.o level.o minecraft.o render.o cnbt.o
 TARGET=cnbt
 
 %.o: %.cpp $(DEPS)

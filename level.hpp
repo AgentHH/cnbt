@@ -27,10 +27,12 @@
 #include <apr-1.0/apr_file_io.h>
 #include <apr-1.0/apr_strings.h>
 
+#include "platform.hpp"
 #include "datastream.hpp"
 #include "tagparser.hpp"
 #include "chunk.hpp"
 #include "coord.hpp"
+#include "util.hpp"
 // }}}
 namespace cnbt {
 // {{{ #defines and typedefs

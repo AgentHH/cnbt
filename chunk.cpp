@@ -165,14 +165,12 @@ int chunkmanager::add_new_chunk(struct chunkcoord c) {
 }
 
 int chunkmanager::load_chunk_raw(struct chunkinfo *ci) {
-    util::pool p;
     uint8_t buf[32];
-    chunkcoord_to_filename(ci->coord, buf, 32);
-
     char *chunkpath;
-    apr_filepath_merge(&chunkpath, path, (char*)buf, APR_FILEPATH_NATIVE, p);
-
+    chunkcoord_to_filename(ci->coord, buf, 32);
+    filepath_merge(&chunkpath, path, (char*)buf);
     struct tag *t = eat_nbt_file(chunkpath);
+    free(chunkpath);
     if (!t) {
         ERR("Eating file for chunk %d, %d failed\n", ci->coord.x, ci->coord.z);
         return 1;
