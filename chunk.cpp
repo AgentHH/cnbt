@@ -19,20 +19,21 @@
 #define ERR(args...) fprintf(stderr, args)
 
 namespace cnbt {
-int chunkcoord_to_filename(struct chunkcoord c, uint8_t **name, util::pool &p) {
-    *name = new(p) uint8_t[32];
-    struct stream_writer w(*name, 32);
+int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, int len) {
+    struct stream_writer w(name, len);
 
-    w.write_base36_int((uint32_t)c.x % 64);
-    w.write_byte_array((uint8_t*)"/", 1);
-    w.write_base36_int((uint32_t)c.z % 64);
-    w.write_byte_array((uint8_t*)"/c.", 3);
-    w.write_base36_int(c.x);
-    w.write_byte_array((uint8_t*)".", 1);
-    w.write_base36_int(c.z);
-    w.write_byte_array((uint8_t*)".dat", 5);
+    if (w.write_base36_int((uint32_t)c.x % 64)  ||
+        w.write_byte_array((uint8_t*)"/", 1)    ||
+        w.write_base36_int((uint32_t)c.z % 64)  ||
+        w.write_byte_array((uint8_t*)"/c.", 3)  ||
+        w.write_base36_int(c.x)                 ||
+        w.write_byte_array((uint8_t*)".", 1)    ||
+        w.write_base36_int(c.z)                 ||
+        w.write_byte_array((uint8_t*)".dat", 5)) {
+        return 1;
+    }
 
-    return w.written();
+    return 0;
 }
 
 int chunk::init(struct tag *t) {
@@ -165,9 +166,8 @@ int chunkmanager::add_new_chunk(struct chunkcoord c) {
 
 int chunkmanager::load_chunk_raw(struct chunkinfo *ci) {
     util::pool p;
-
-    uint8_t *buf;
-    chunkcoord_to_filename(ci->coord, &buf, p);
+    uint8_t buf[32];
+    chunkcoord_to_filename(ci->coord, buf, 32);
 
     char *chunkpath;
     apr_filepath_merge(&chunkpath, path, (char*)buf, APR_FILEPATH_NATIVE, p);

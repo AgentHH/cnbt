@@ -43,7 +43,7 @@ namespace cnbt {
 typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
 typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
 // }}}
-int chunkcoord_to_filename(struct chunkcoord c, uint8_t **name, util::pool &p);
+int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, int len);
 // {{{ chunk struct
 struct chunk {
     uint8_t data[CHUNK_DATA_LEN];
