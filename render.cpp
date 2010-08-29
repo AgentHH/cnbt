@@ -98,7 +98,7 @@ int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockco
     // w, h are number of chunks in the x and z directions
     size_t nx = dim.first, nz = dim.second;
     // pw, ph are the pixel widths and heights of the image buffer
-    size_t pi = imagesize.first, pj = imagesize.second;
+    size_t pi = imagesize.first; //, pj = imagesize.second;
     // bx, by, bz are block x, y, and z
     size_t bx = block.x, by = block.y, bz = block.z;
 
@@ -315,7 +315,7 @@ int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockc
     // w, h are number of chunks in the x and z directions
     size_t nx = dim.first, nz = dim.second;
     // pw, ph are the pixel widths and heights of the image buffer
-    size_t pi = imagesize.first, pj = imagesize.second;
+    size_t pi = imagesize.first; //, pj = imagesize.second;
     // bx, bz are block x and y
     size_t bx = block.x, bz = block.z;
 

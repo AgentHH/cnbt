@@ -184,7 +184,9 @@ uint8_t *stream_eater::eat_string() {
     if (remain() < s) {
         return NULL;
     }
-    uint8_t *ret = (uint8_t*)strndup((const char*)&buf[pos], s);
+    uint8_t *ret = (uint8_t*)malloc(sizeof(uint8_t) * (s + 1));
+    memcpy(ret, &buf[pos], s);
+    ret[s] = '\0';
     pos += s * sizeof(uint8_t);
     return ret;
 }
