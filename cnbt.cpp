@@ -92,9 +92,6 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
 }
 
 int main(int argc, char **argv) {
-    apr_app_initialize(&argc, (const char * const**)&argv, NULL);
-    atexit(apr_terminate);
-
     if (argc < 2) {
         ERR("usage: %s [-d dir] [-r rendertype] path/to/level output.png\n"
 "valid dirs are: n s e w\n"

@@ -42,35 +42,34 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
 }
 
 int find_chunk_files(struct chunkmanager *cm, const char *path) {
-    apr_dir_t *dir;
-    apr_finfo_t finfo;
-    apr_status_t status;
-    util::pool p;
+    DIR *dir;
+    struct dirent *dirp;
 
-    status = apr_dir_open(&dir, path, p);
-    if (status != APR_SUCCESS) {
+    dir = opendir(path);
+    if (dir == NULL) {
         printf("Unable to open directory %s\n", path);
         return 1;
     }
 
-    while (apr_dir_read(&finfo, APR_FINFO_NAME | APR_FINFO_TYPE, dir) == APR_SUCCESS) {
-        if (finfo.filetype != APR_DIR && finfo.filetype != APR_REG)
+    while ((dirp = readdir(dir))) {
+        if (dirp->d_type != DT_DIR && dirp->d_type != DT_REG)
             continue;
 
-        if (finfo.filetype == APR_DIR) {
-            if (!strcmp(finfo.name, ".") || !strcmp(finfo.name, "..")) {
+        if (dirp->d_type == DT_DIR) {
+            if (!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) {
                 continue;
             }
             char *newpath;
-            filepath_merge(&newpath, path, finfo.name);
+            filepath_merge(&newpath, path, dirp->d_name);
             int ret = find_chunk_files(cm, newpath);
             free(newpath);
             if (ret) {
+                closedir(dir);
                 return ret;
             }
-        } else if (finfo.filetype == APR_REG) {
+        } else if (dirp->d_type == DT_REG) {
             int32_t x, z;
-            int ret = parse_chunk_file_name(finfo.name, &x, &z);
+            int ret = parse_chunk_file_name(dirp->d_name, &x, &z);
             if (ret)
                 continue;
             //printf("found chunk (%d,%d)\n", x, y);
@@ -84,7 +83,7 @@ int find_chunk_files(struct chunkmanager *cm, const char *path) {
             continue;
         }
     }
-    apr_dir_close(dir);
+    closedir(dir);
 
     return 0;
 }
