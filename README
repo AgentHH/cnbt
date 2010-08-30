@@ -1,6 +1,16 @@
-This is version 0.1.1 of cnbt, released under the GPLv3.
+This is version 0.1.2 of cnbt, released under the GPLv3.
 
 It uses libpng and zlib.
+
+How to compile:
+- On most standard UNIX-y systems, 'make' should suffice
+    as long as you have a slightly modern version of g++.
+- It should work without prodding on Cygwin or MinGW.
+- With Visual Studio, I used the precompiled zlib / libpng
+    from the GTK project:
+        http://www.gtk.org/download-windows.html
+    Add the includes / libraries to VS, and it should compile
+    properly. The project files are from VS2008.
 
 To edit colors:
 - Muck around in minecraft.cpp for block colors.
