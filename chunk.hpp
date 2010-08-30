@@ -15,7 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-// {{{ #includes
 #include "platform.hpp"
 
 #include <map>
@@ -24,20 +23,20 @@
 #include "datastream.hpp"
 #include "tagparser.hpp"
 #include "coord.hpp"
-// }}}
 namespace cnbt {
-// {{{ #defines and typedefs
-#define CHUNK_DATA_LEN 16384
-#define CHUNK_SKYLIGHT_LEN 16384
-#define CHUNK_HEIGHTMAP_LEN 256
-#define CHUNK_BLOCKLIGHT_LEN 16384
-#define CHUNK_BLOCKS_LEN 32768
+enum {
+    CHUNK_DATA_LEN = 16384,
+    CHUNK_SKYLIGHT_LEN = 16384,
+    CHUNK_HEIGHTMAP_LEN = 256,
+    CHUNK_BLOCKLIGHT_LEN = 16384,
+    CHUNK_BLOCKS_LEN = 32768,
 
-#define CHUNKS_MAX_LOADED 4096
+    CHUNKS_MAX_LOADED = 4096,
+};
 
 typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
 typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
-// }}}
+
 int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, int len);
 // {{{ chunk struct
 struct chunk {

@@ -15,9 +15,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-// {{{ #includes
 #include "platform.hpp"
-// }}}
 namespace cnbt {
 typedef std::pair<size_t, size_t> coord;
 typedef std::pair<int32_t, int32_t> scoord;

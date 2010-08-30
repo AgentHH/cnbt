@@ -15,7 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-// {{{ #includes
 #include "platform.hpp"
 
 #include <zlib.h>
@@ -23,26 +22,27 @@
 #ifdef __linux
 #  include <byteswap.h>
 #endif
-
-#include "nbtconstants.hpp"
-// }}}
 namespace cnbt {
-#define STREAM_WRITER_BUFSIZE 4096
-// {{{ evil hacks to support network floating point values
-float ntohf(float f);
-double ntohd(double d);
-uint16_t ntohs(uint16_t i);
-uint32_t ntohl(uint32_t i);
-uint64_t ntohll(uint64_t i);
-#define htonf(expr) ntohf(expr)
-#define htond(expr) ntohd(expr)
-#define htons(expr) ntohs(expr)
-#define htonl(expr) ntohl(expr)
-#define htonll(expr) ntohll(expr)
-//float htonf(float f);
-//double htond(double d);
-//uint64_t htonll(uint64_t i);
-// }}}
+enum {
+    STREAM_WRITER_BUFSIZE = 4096,
+};
+
+enum tagtype { // this is a slightly bad place, but better than a separate header
+    TAG_END = 0,
+    TAG_BYTE,
+    TAG_SHORT,
+    TAG_INT,
+    TAG_LONG,
+    TAG_FLOAT,
+    TAG_DOUBLE,
+    TAG_BYTE_ARRAY,
+    TAG_STRING,
+    TAG_LIST,
+    TAG_COMPOUND,
+
+    TAG_INVALID = 100,
+    TAG_UNKNOWN,
+};
 // {{{ stream classes to simplify extracting and writing data
 struct stream_eater {
     uint8_t *buf;

@@ -15,23 +15,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-// {{{ #includes
 #include "platform.hpp"
 
+#include <errno.h>
 #include <vector>
-//#include <errno.h>
 
-#include "nbtconstants.hpp"
 #include "datastream.hpp"
-// }}}
 namespace cnbt {
-// {{{ constants for NBT file buffers
-// note, this is a hack. XXX
-// I should carefully pick the size, and reallocate
-// as necessary, but I'm lazy and this silly hack
-// works for all of the Minecraft levels I've seen
-#define NBT_BUFFER_SIZE  131072
-// }}}
+enum {
+    DEFAULT_BUFFER_SIZE = 131072,
+};
 // {{{ tag class defreadions
 // XXX: writing doesn't check for error conditions, so it'll explode if
 // something bad happens to it

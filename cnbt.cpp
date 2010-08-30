@@ -29,7 +29,7 @@
 int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendertype *rt, uint8_t *dir) {
     int i;
     *rt = cnbt::RENDER_TOP_DOWN;
-    *dir = DIR_NORTH;
+    *dir = cnbt::DIR_NORTH;
     *world = NULL;
     *out = NULL;
 
@@ -39,16 +39,16 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
             if (strlen(argv[i]) == 1) {
                 switch (argv[i][0]) {
                     case 'n':
-                        *dir = DIR_NORTH;
+                        *dir = cnbt::DIR_NORTH;
                         continue;
                     case 's':
-                        *dir = DIR_SOUTH;
+                        *dir = cnbt::DIR_SOUTH;
                         continue;
                     case 'e':
-                        *dir = DIR_EAST;
+                        *dir = cnbt::DIR_EAST;
                         continue;
                     case 'w':
-                        *dir = DIR_WEST;
+                        *dir = cnbt::DIR_WEST;
                         continue;
                     default:
                         break;
@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
 "valid rendertypes are: topdown oblique\n", argv[0]);
         exit(1);
     }
+
     if (!strcmp(argv[1], "-f")) { // for testing NBT read / write
         if (argc < 3) {
             ERR("filename must be provided with -f\n");
@@ -139,7 +140,7 @@ int main(int argc, char **argv) {
         if (ret)
             return ret;
 
-        cnbt::level l(name);
+        cnbt::level l((const char*)name);
         ret = l.load();
         if (ret) {
             printf("level.load() failed\n");

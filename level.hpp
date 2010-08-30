@@ -15,7 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-// {{{ #includes
 #include "platform.hpp"
 
 //#include <errno.h>
@@ -30,19 +29,17 @@
 #include "tagparser.hpp"
 #include "chunk.hpp"
 #include "coord.hpp"
-// }}}
 namespace cnbt {
-// {{{ #defines and typedefs
-#define LEVEL_MAIN_FILE "level.dat"
-// }}}
+const char LEVEL_MAIN_FILE[] = "level.dat";
 int find_chunk_files(struct chunkmanager *cm, const char *path);
 // {{{ main level struct
 struct level {
     struct tag *root;
     char *path;
+    char *levelfile;
     struct chunkmanager manager;
 
-    level(char *path);
+    level(const char *path, const char *levelfile = NULL);
     ~level();
 
     int load(); // loads level.dat and chunk list

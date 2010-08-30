@@ -18,19 +18,22 @@
 
 #include "datastream.hpp"
 
-namespace {
-    void byteswap(uint8_t *data, size_t bytes) {
-        int i = 0, j = bytes - 1;
-        while (i < j) {
-            std::swap(data[i], data[j]);
-            i++;
-            j--;
-        }
+namespace { // ugly hack for byteswapping
+void byteswap(uint8_t *data, size_t bytes) {
+    int i = 0, j = bytes - 1;
+    while (i < j) {
+        std::swap(data[i], data[j]);
+        i++;
+        j--;
     }
 }
 
-namespace cnbt {
-// {{{ evil hacks to support network floating point values
+#define htonf(expr) ntohf(expr)
+#define htond(expr) ntohd(expr)
+#define htons(expr) ntohs(expr)
+#define htonl(expr) ntohl(expr)
+#define htonll(expr) ntohll(expr)
+
 float ntohf(float f) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     union {
@@ -114,6 +117,8 @@ uint64_t ntohll(uint64_t i) {
 #endif
 }
 // }}}
+} // end anonymous namespace
+namespace cnbt {
 // {{{ stream eater to simplify extracting data
 stream_eater::stream_eater(uint8_t *buf, size_t len) : buf(buf), len(len) {
     pos = 0;
@@ -466,3 +471,10 @@ int stream_writer::write_base36_int(int32_t n) {
 }
 // }}}
 } // end namespace cnbt
+
+// I am not proud
+#undef htonf
+#undef htond
+#undef htons
+#undef htonl
+#undef htonll

@@ -135,12 +135,18 @@ int find_chunk_files(struct chunkmanager *cm, const char *path) {
 }
 #endif
 // {{{ level class methods
-level::level(char *path) : manager(path) {
+level::level(const char *path, const char *levelfile) : manager(path) {
     this->path = strdup(path);
+    if (levelfile) {
+        this->levelfile = strdup(levelfile);
+    } else {
+        this->levelfile = strdup(LEVEL_MAIN_FILE);
+    }
     root = NULL;
 }
 level::~level() {
     free(path);
+    free(levelfile);
     if (root)
         delete root;
 }
@@ -150,7 +156,7 @@ int level::load() {
         return 1;
 
     char *filepath;
-    filepath_merge(&filepath, path, LEVEL_MAIN_FILE);
+    filepath_merge(&filepath, path, levelfile);
     struct tag *t = eat_nbt_file(filepath);
     free(filepath);
     if (t == NULL) {

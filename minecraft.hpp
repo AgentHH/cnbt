@@ -15,7 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-// {{{ #includes
 #include "platform.hpp"
 
 #if defined(__GNUC__) && __GNUC__ > 3
@@ -23,7 +22,6 @@
 #else
 # include <map>
 #endif
-// }}}
 namespace cnbt {
 namespace game {
 

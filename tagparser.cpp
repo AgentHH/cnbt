@@ -14,10 +14,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "platform.hpp"
-
-#include <errno.h>
-
 #include "tagparser.hpp"
 
 #define tag_printf(...) for(int _i=0;_i<depth;_i++){printf("    ");}printf(__VA_ARGS__)
@@ -541,26 +537,26 @@ struct tag *eat_nbt_file(char *filename) {
     }
 
     len = 0;
-    data = (uint8_t*)malloc(sizeof(uint8_t) * NBT_BUFFER_SIZE);
+    data = (uint8_t*)malloc(sizeof(uint8_t) * DEFAULT_BUFFER_SIZE);
     if (!data) {
         ERR("Unable to allocate memory for file\n");
         gzclose(fp);
         return NULL;
     }
     while (1) {
-        ret = gzread(fp, data + len, sizeof(uint8_t) * NBT_BUFFER_SIZE);
+        ret = gzread(fp, data + len, sizeof(uint8_t) * DEFAULT_BUFFER_SIZE);
         if (ret == -1) {
             ERR("Error in reading from file\n");
             gzclose(fp);
             return NULL;
         } else if (!ret) {
             break;
-        } else if (ret < NBT_BUFFER_SIZE) {
+        } else if (ret < DEFAULT_BUFFER_SIZE) {
             len += ret;
             break;
         }
-        len += NBT_BUFFER_SIZE;
-        data = (uint8_t*)realloc(data, len + NBT_BUFFER_SIZE);
+        len += DEFAULT_BUFFER_SIZE;
+        data = (uint8_t*)realloc(data, len + DEFAULT_BUFFER_SIZE);
         if (!data) {
             ERR("Unable to reallocate memory for file\n");
             gzclose(fp);
