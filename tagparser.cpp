@@ -14,10 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "platform.hpp"
+
+#include <errno.h>
+
 #include "tagparser.hpp"
 
-#define ERR(args...) fprintf(stderr, args)
-#define tag_printf(A...) for(int _i=0;_i<depth;_i++){printf("    ");}printf(A)
+#define tag_printf(...) for(int _i=0;_i<depth;_i++){printf("    ");}printf(__VA_ARGS__)
 
 namespace cnbt {
 // {{{ NBT parser
@@ -256,7 +259,7 @@ int tag_list::read(struct stream_eater &s, int named) {
             return 1;
         int32_t num = (int32_t)s.eat_int();
 
-        for (ssize_t i = 0; i < num; i++) {
+        for (size_t i = 0; i < (size_t)num; i++) {
             switch (listtype) {
                 case TAG_END: // I'm not sure this is valid, but leaving it here anyways
                     t = new tag_end();

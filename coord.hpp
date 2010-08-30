@@ -17,10 +17,6 @@
 #pragma once
 // {{{ #includes
 #include "platform.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
 // }}}
 namespace cnbt {
 typedef std::pair<size_t, size_t> coord;

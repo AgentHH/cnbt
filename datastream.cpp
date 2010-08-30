@@ -14,9 +14,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "datastream.hpp"
+#include "platform.hpp"
 
-#define ERR(args...) fprintf(stderr, args)
+#include "datastream.hpp"
 
 namespace {
     void byteswap(uint8_t *data, size_t bytes) {
@@ -40,7 +40,7 @@ float ntohf(float f) {
 
     x = f;
 # ifdef _MSC_VER
-    y = __byteswap_uint32(y);
+    y = _byteswap_ulong(y);
 # elif defined(__linux)
     y = __bswap_32(y);
 # else
@@ -60,7 +60,7 @@ double ntohd(double d) {
 
     x = d;
 # ifdef _MSC_VER
-    y = __byteswap_uint64(y);
+    y = _byteswap_uint64(y);
 # elif defined(__linux)
     y = __bswap_64(y);
 # else
@@ -74,7 +74,7 @@ double ntohd(double d) {
 uint16_t ntohs(uint16_t i) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # ifdef _MSC_VER
-    return __byteswap_uint16(i);
+    return _byteswap_ushort(i);
 # elif defined(__linux)
     return __bswap_16(i);
 # else
@@ -88,7 +88,7 @@ uint16_t ntohs(uint16_t i) {
 uint32_t ntohl(uint32_t i) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # ifdef _MSC_VER
-    return __byteswap_uint32(i);
+    return _byteswap_ulong(i);
 # elif defined(__linux)
     return __bswap_32(i);
 # else
@@ -102,7 +102,7 @@ uint32_t ntohl(uint32_t i) {
 uint64_t ntohll(uint64_t i) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # ifdef _MSC_VER
-    return __byteswap_uint64(i);
+    return _byteswap_uint64(i);
 # elif defined(__linux)
     return __bswap_64(i);
 # else

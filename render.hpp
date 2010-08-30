@@ -17,16 +17,12 @@
 #pragma once
 // {{{ #includes
 #include "platform.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+
 #include <png.h>
 
 #include "chunk.hpp"
 #include "minecraft.hpp"
 // }}}
-#define ERR(args...) fprintf(stderr, args)
 
 #define BLOCKS_PER_X 16
 #define BLOCKS_PER_Y 128

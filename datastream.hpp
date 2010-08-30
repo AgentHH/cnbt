@@ -17,11 +17,7 @@
 #pragma once
 // {{{ #includes
 #include "platform.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <assert.h>
+
 #include <zlib.h>
 #include <algorithm>
 #ifdef __linux

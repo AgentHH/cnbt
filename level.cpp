@@ -16,8 +16,6 @@
 */
 #include "level.hpp"
 
-#define ERR(args...) fprintf(stderr, args)
-
 namespace cnbt {
 int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
     struct stream_eater s((uint8_t *)name, strlen(name));

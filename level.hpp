@@ -17,15 +17,13 @@
 #pragma once
 // {{{ #includes
 #include "platform.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <assert.h>
-#include <errno.h>
+
+//#include <errno.h>
 #ifdef _WIN32
 # include <windows.h>
+#else
+# include <dirent.h>
+# include <sys/types.h>
 #endif
 
 #include "datastream.hpp"

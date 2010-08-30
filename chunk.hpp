@@ -17,10 +17,7 @@
 #pragma once
 // {{{ #includes
 #include "platform.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
+
 #include <map>
 #include <deque>
 
@@ -85,9 +82,5 @@ struct chunkmanager {
     int load_chunk_raw(struct chunkinfo *c);
     int load_chunk(struct chunkinfo *c);
     int set_load_strategy(void (*strat)(chunkcoord selected, std::deque<chunkcoord> &load)); // for oblique etc levels
-#if 0
-    struct chunkinfo *start();
-    struct chunkinfo *next();
-#endif
 };
 } // end namespace cnbt

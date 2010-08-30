@@ -17,10 +17,9 @@
 #pragma once
 // {{{ #includes
 #include "platform.hpp"
-#include <stdlib.h>
-#include <stdio.h>
+
 #include <vector>
-#include <errno.h>
+//#include <errno.h>
 
 #include "nbtconstants.hpp"
 #include "datastream.hpp"

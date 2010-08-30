@@ -15,10 +15,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "platform.hpp"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+
 #include <vector>
 
 #include "tagparser.hpp"
@@ -28,8 +25,6 @@
 #include "coord.hpp"
 #include "minecraft.hpp"
 #include "render.hpp"
-
-#define ERR(args...) fprintf(stderr, args)
 
 int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendertype *rt, uint8_t *dir) {
     int i;

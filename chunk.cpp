@@ -16,8 +16,6 @@
 */
 #include "chunk.hpp"
 
-#define ERR(args...) fprintf(stderr, args)
-
 namespace cnbt {
 int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, int len) {
     struct stream_writer w(name, len);
@@ -229,30 +227,4 @@ struct chunkinfo *chunkmanager::get_chunk(struct chunkcoord c) {
     }
     return NULL;
 }
-
-#if 0
-struct chunkinfo *chunkmanager::start() {
-    // for now, just uses an internal chunkmap iterator
-    if (chunks.size() < 1)
-        return NULL;
-    mapiterator = chunks.begin();
-
-    struct chunkinfo *temp = (*mapiterator).second;
-    if (load_chunk(temp) != 0) {
-        return NULL;
-    }
-    return temp;
-}
-struct chunkinfo *chunkmanager::next() {
-    if (mapiterator == chunks.end())
-        return NULL;
-
-    struct chunkinfo *temp = (*mapiterator).second;
-    if (load_chunk(temp) != 0) {
-        return NULL;
-    }
-    ++mapiterator;
-    return temp;
-}
-#endif
 } // end namespace cnbt

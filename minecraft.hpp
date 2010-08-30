@@ -17,8 +17,7 @@
 #pragma once
 // {{{ #includes
 #include "platform.hpp"
-#include <stdlib.h>
-#include <stdio.h>
+
 #if defined(__GNUC__) && __GNUC__ > 3
 # include <tr1/unordered_map>
 #else
