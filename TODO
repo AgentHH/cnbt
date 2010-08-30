@@ -1,0 +1,9 @@
+- add support for loading of colorfiles for blocks so it's not a giant hardcoded mess
+- make the entitymap less memory leak-y and faster
+- add angled oblique generation
+- make snow work well
+- add map slicing
+- add night rendering mode with lighting
+- add explored cave detection and rendering
+- add chunk pruning
+- separate bits into library and program
