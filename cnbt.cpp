@@ -16,6 +16,8 @@
 */
 #include "platform.hpp"
 
+#include <time.h>
+
 #include "tagparser.hpp"
 #include "datastream.hpp"
 #include "level.hpp"
@@ -226,6 +228,8 @@ int main(int argc, char **argv) {
             return 1;
         }
 
+        time_t start = time(NULL);
+
         cnbt::level l((const char*)name);
         ret = l.load();
         if (ret) {
@@ -243,6 +247,10 @@ int main(int argc, char **argv) {
 
         free(image);
         delete r;
+
+        time_t end = time(NULL);
+
+        printf("map render took %lu wallclock seconds\n", end - start);
 
 #if 0
         for (cnbt::game::entitymap::iterator i = em.begin(); i != em.end(); ++i) {
