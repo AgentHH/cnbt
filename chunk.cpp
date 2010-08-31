@@ -49,7 +49,7 @@ int chunk::init(struct tag *t) {
     if (strcmp((char*)u->name, "Level"))
         return 1;
     // ok, u->children has everything we want now
-    for (std::vector<struct tag *>::iterator i = u->children.begin(); i != u->children.end(); ++i) {
+    for (std::deque<struct tag *>::iterator i = u->children.begin(); i != u->children.end(); ++i) {
         char *name = (char*)(*i)->name;
         enum tagtype type = (*i)->type;
         if (name == NULL) {
@@ -226,5 +226,87 @@ struct chunkinfo *chunkmanager::get_chunk(struct chunkcoord c) {
         return ci;
     }
     return NULL;
+}
+
+typedef std::map<struct chunkcoord, size_t> chunkctog;
+typedef std::map<size_t, chunklist*> chunkgtol;
+
+void merge_groups(chunkctog &chunktogroup,
+                  chunkgtol &grouptolist,
+                  chunkcoord co, chunkcoord cn) {
+    chunkctog::iterator cni = chunktogroup.find(cn);
+    size_t ng = 0;
+    if (cni != chunktogroup.end()) {
+        ng = (*cni).second;
+    } else {
+        return; // possible neighbor does not exist, do nothing
+    }
+    chunkctog::iterator coi = chunktogroup.find(co);
+    size_t og = 0;
+    if (coi != chunktogroup.end()) {
+        og = (*coi).second;
+    }
+    if (ng == og) { // already part of same group
+        return;
+    } else if (og == 0) { // not in a group, and there is a group to join
+        chunktogroup[co] = ng;
+        grouptolist[ng]->push_back(co);
+    } else { // group conflict
+        size_t a, b;
+        if (ng < og) {
+            a = ng;
+            b = og;
+        } else {
+            a = og;
+            b = ng;
+        }
+        chunklist *al = grouptolist[a];
+        chunklist *bl = grouptolist[b];
+        for (chunklist::iterator bi = bl->begin(); bi != bl->end(); ++bi) {
+            chunktogroup[*bi] = a;
+            al->push_back(*bi);
+        }
+        delete bl;
+        grouptolist.erase(b);
+    }
+}
+
+std::deque<chunklist*> *chunkmanager::find_chunk_groups() {
+    // XXX FIXME: if the chunks are read in just the right way and there are
+    //              enough of them, we'll run out of ints
+    size_t groupmax = 1; // 0 is special
+    chunkctog chunktogroup;
+    chunkgtol grouptolist;
+    for (chunkmap::iterator i = chunks.begin(); i != chunks.end(); ++i) {
+        struct chunkcoord c = (*i).first;
+        merge_groups(chunktogroup, grouptolist, c, chunkcoord(c.x, c.z + 1));
+        merge_groups(chunktogroup, grouptolist, c, chunkcoord(c.x + 1, c.z));
+        merge_groups(chunktogroup, grouptolist, c, chunkcoord(c.x, c.z - 1));
+        merge_groups(chunktogroup, grouptolist, c, chunkcoord(c.x - 1, c.z));
+
+        chunkctog::iterator ci = chunktogroup.find(c);
+        size_t g = 0;
+        if (ci != chunktogroup.end()) {
+            g = (*ci).second;
+            //printf("chunk (%d,%d) has been merged into group %lu\n",
+            //        c.x, c.z, g);
+        } else {
+            //printf("chunk (%d,%d) has no neighbors, adding as group %lu\n",
+            //        c.x, c.z, groupmax);
+            chunktogroup[c] = groupmax;
+            grouptolist[groupmax] = new chunklist();
+            grouptolist[groupmax]->push_back(c);
+            groupmax++;
+        }
+    }
+
+    std::deque<chunklist*> *ret = new std::deque<chunklist*>();
+    for (chunkgtol::iterator gi = grouptolist.begin(); gi != grouptolist.end(); ++gi) {
+        //size_t g = (*gi).first;
+        //chunklist *l = (*gi).second;
+        ret->push_back((*gi).second);
+        //printf("Group %lu has %lu chunks in it\n", g, l->size());
+    }
+    return ret;
 }
 } // end namespace cnbt

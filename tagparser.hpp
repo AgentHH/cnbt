@@ -18,7 +18,7 @@
 #include "platform.hpp"
 
 #include <errno.h>
-#include <vector>
+#include <deque>
 
 #include "datastream.hpp"
 namespace cnbt {
@@ -29,7 +29,7 @@ enum {
 // XXX: writing doesn't check for error conditions, so it'll explode if
 // something bad happens to it
 struct tag {
-    std::vector<struct tag *> children;
+    std::deque<struct tag *> children;
     uint8_t *name;
     enum tagtype type;
 
@@ -37,7 +37,7 @@ struct tag {
         name = NULL;
     }
     virtual ~tag() {
-        for (std::vector<struct tag *>:: iterator i = children.begin(); i != children.end(); ++i) {
+        for (std::deque<struct tag *>:: iterator i = children.begin(); i != children.end(); ++i) {
             delete *i;
         }
         if (name)

@@ -19,6 +19,7 @@
 
 #include <map>
 #include <deque>
+#include <list>
 
 #include "datastream.hpp"
 #include "tagparser.hpp"
@@ -36,6 +37,7 @@ enum {
 
 typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
 typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
+typedef std::deque<struct chunkcoord> chunklist;
 
 int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, int len);
 // {{{ chunk struct
@@ -51,7 +53,7 @@ struct chunk {
 
     bool terrainpopulated;
 
-    std::vector<struct tag *> tags;
+    std::deque<struct tag *> tags;
 
     int init(struct tag *t);
 };
@@ -80,6 +82,7 @@ struct chunkmanager {
     int add_new_chunk(struct chunkcoord c);
     int load_chunk_raw(struct chunkinfo *c);
     int load_chunk(struct chunkinfo *c);
-    int set_load_strategy(void (*strat)(chunkcoord selected, std::deque<chunkcoord> &load)); // for oblique etc levels
+    //int set_load_strategy(void (*strat)(chunkcoord selected, std::deque<chunkcoord> &load)); // for oblique etc levels
+    std::deque<chunklist *> *find_chunk_groups();
 };
 } // end namespace cnbt

@@ -314,7 +314,7 @@ int tag_list::write(struct stream_writer &s, int named) {
     }
     s.write_tag(listtype);
     s.write_int(children.size());
-    for (std::vector<struct tag*>::iterator i = children.begin(); i != children.end(); ++i) {
+    for (std::deque<struct tag*>::iterator i = children.begin(); i != children.end(); ++i) {
         (*i)->write(s, 0);
     }
     return 0;
@@ -391,7 +391,7 @@ int tag_compound::write(struct stream_writer &s, int named) {
         s.write_tag(TAG_COMPOUND);
         s.write_string(name);
     }
-    for (std::vector<struct tag*>::iterator i = children.begin(); i != children.end(); ++i) {
+    for (std::deque<struct tag*>::iterator i = children.begin(); i != children.end(); ++i) {
         (*i)->write(s, 1);
     }
     s.write_tag(TAG_END);
@@ -496,7 +496,7 @@ void print_tag_tree(struct tag *t, int depth) {
             } else {
                 tag_printf("list\n");
             }
-            for (std::vector<struct tag*>::iterator i = x->children.begin(); i != x->children.end(); ++i) {
+            for (std::deque<struct tag*>::iterator i = x->children.begin(); i != x->children.end(); ++i) {
                 print_tag_tree(*i, depth + 1);
             }
             break;
@@ -508,7 +508,7 @@ void print_tag_tree(struct tag *t, int depth) {
             } else {
                 tag_printf("compound\n");
             }
-            for (std::vector<struct tag*>::iterator i = x->children.begin(); i != x->children.end(); ++i) {
+            for (std::deque<struct tag*>::iterator i = x->children.begin(); i != x->children.end(); ++i) {
                 print_tag_tree(*i, depth + 1);
             }
             break;

@@ -7,3 +7,5 @@
 - add explored cave detection and rendering
 - add chunk pruning
 - separate bits into library and program
+- add a bunch of threading to make the rendering not wait for IO
+- add some sort of basic GUI
