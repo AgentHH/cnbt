@@ -272,8 +272,10 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
     game::init_blocks(em);
 
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
-    if (!image)
+    if (!image) {
+        ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
+    }
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -291,6 +293,7 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
                 if (!ci) {
+                    ERR("Unable to load chunk (%d,%d), aborting render\n", c.x, c.z);
                     free(image);
                     return NULL;
                 }
@@ -462,8 +465,10 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
     game::init_blocks(em);
 
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
-    if (!image)
+    if (!image) {
+        ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
+    }
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -473,6 +478,7 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
                 if (!ci) {
+                    ERR("Unable to load chunk (%d,%d), aborting render\n", c.x, c.z);
                     free(image);
                     return NULL;
                 }

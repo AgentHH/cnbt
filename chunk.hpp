@@ -79,10 +79,15 @@ struct chunkmanager {
     bool chunk_exists(int32_t x, int32_t z);
     bool chunk_exists(struct chunkcoord c);
     struct chunkinfo *get_chunk(struct chunkcoord c);
+    int delete_chunk(struct chunkcoord c);
     int add_new_chunk(struct chunkcoord c);
     int load_chunk_raw(struct chunkinfo *c);
     int load_chunk(struct chunkinfo *c);
     //int set_load_strategy(void (*strat)(chunkcoord selected, std::deque<chunkcoord> &load)); // for oblique etc levels
     std::deque<chunklist *> *find_chunk_groups();
+    int prune_chunks(chunklist *cl);
+    int prune_chunks_on_disk(chunklist *cl);
 };
+
+chunkcoord find_centroid(chunklist *cl);
 } // end namespace cnbt

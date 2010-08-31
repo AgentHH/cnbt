@@ -135,6 +135,20 @@ chunkmanager::~chunkmanager() {
     }
 }
 
+int chunkmanager::delete_chunk(struct chunkcoord c) {
+    chunkmap::iterator i = chunks.find(c);
+    if (i == chunks.end())
+        return 0;
+
+    struct chunkinfo *ci = (*i).second;
+    if (ci)
+        delete ci;
+
+    chunks.erase(i);
+
+    return 1;
+}
+
 int chunkmanager::add_new_chunk(struct chunkcoord c) {
     struct chunkinfo *ci = new struct chunkinfo(c);
     if (chunks.count(c)) {
@@ -197,8 +211,10 @@ int chunkmanager::load_chunk(struct chunkinfo *ci) {
     }
     while (loadedchunks.size() > CHUNKS_MAX_LOADED) {
         struct chunkinfo *temp = loadedchunks.front();
-        delete temp->c;
-        temp->c = NULL;
+        if (temp) {
+            delete temp->c;
+            temp->c = NULL;
+        }
         loadedchunks.pop_front();
     }
     loadedchunks.push_back(ci);
@@ -230,6 +246,17 @@ struct chunkinfo *chunkmanager::get_chunk(struct chunkcoord c) {
 
 typedef std::map<struct chunkcoord, size_t> chunkctog;
 typedef std::map<size_t, chunklist*> chunkgtol;
+
+cnbt::chunkcoord find_centroid(chunklist *cl) {
+    // XXX FIXME: this has the potential to fail on gigantic maps
+    ptrdiff_t sx = 0, sz = 0, n = 0;
+    for (chunklist::iterator ci = cl->begin(); ci != cl->end(); ++ci) {
+        n++;
+        sx += (*ci).x;
+        sz += (*ci).z;
+    }
+    return chunkcoord(sx / n, sz / n);
+}
 
 void merge_groups(chunkctog &chunktogroup,
                   chunkgtol &grouptolist,
@@ -271,7 +298,44 @@ void merge_groups(chunkctog &chunktogroup,
     }
 }
 
+int chunkmanager::prune_chunks(chunklist *cl) {
+    if (!cl)
+        return 0;
+
+    int deleted = 0;
+    for (chunklist::iterator i = cl->begin(); i != cl->end(); ++i) {
+        deleted += delete_chunk(*i);
+    }
+
+    return deleted;
+}
+
+int chunkmanager::prune_chunks_on_disk(chunklist *cl) {
+    if (!cl)
+        return 0;
+
+    int deleted = 0;
+    for (chunklist::iterator i = cl->begin(); i != cl->end(); ++i) {
+        char buf[32];
+        chunkcoord_to_filename(*i, (uint8_t*)buf, 32);
+        char *chunkpath;
+        filepath_merge(&chunkpath, path, (char*)buf);
+        int ret = unlink(chunkpath);
+        if (ret) {
+            ERR("Unable to remove \"%s\"\n", chunkpath);
+        } else {
+            deleted += 1;
+        }
+        free(chunkpath);
+    }
+
+    return deleted;
+}
+
 std::deque<chunklist*> *chunkmanager::find_chunk_groups() {
+    if (chunks.empty())
+        return NULL;
+
     // XXX FIXME: if the chunks are read in just the right way and there are
     //              enough of them, we'll run out of ints
     size_t groupmax = 1; // 0 is special

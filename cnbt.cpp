@@ -165,18 +165,53 @@ int main(int argc, char **argv) {
 
         cnbt::chunkmanager *cm = &l.manager;
         std::deque<cnbt::chunklist*> *groups = cm->find_chunk_groups();
-
-        size_t max = 0;
-        cnbt::chunklist *maxcl;
-        for (std::deque<cnbt::chunklist*>::iterator i = groups->begin(); i != groups->end(); ++i) {
-            size_t temp = (*i)->size();
-            if (temp > max) {
-                max = temp;
-                maxcl = *i;
-            }
+        if (!groups) {
+            printf("No chunks in level\n");
+            return 1;
         }
-        printf("Largest continguous chunk has %lu out of %lu chunks total (%g%%)\n", max, cm->chunks.size(), 100 * (double)max / (double)cm->chunks.size());
 
+        if (groups->size() > 1) {
+            size_t max = 0, sum = 0;
+            std::deque<cnbt::chunklist*>::iterator maxci;
+            for (std::deque<cnbt::chunklist*>::iterator i = groups->begin(); i != groups->end(); ++i) {
+                size_t temp = (*i)->size();
+                if (temp > max) {
+                    sum += max;
+                    max = temp;
+                    maxci = i;
+                } else {
+                    sum += temp;
+                }
+                cnbt::chunkcoord center = cnbt::find_centroid(*i);
+                printf("Region with %lu chunks is centered at (%d,%d)\n", temp, center.x, center.z);
+            }
+
+            delete (*maxci);
+            groups->erase(maxci);
+
+            printf("\nThe largest contiguous region has %lu out of %lu chunks total (%g%%)\n", max, cm->chunks.size(), 100 * (double)max / (double)cm->chunks.size());
+
+            printf("Are you sure you want to delete %lu chunks?\n", sum);
+            printf("Type \"yes\" to prune, or anything else to abort.\n");
+
+            char buf[32];
+            if (buf == fgets(buf, 32, stdin) && !strcmp(buf, "yes\n")) {
+                printf("Pruning all non-connected chunks...\n");
+                for (std::deque<cnbt::chunklist*>::iterator i = groups->begin(); i != groups->end(); ++i) {
+                    cm->prune_chunks_on_disk(*i);
+                }
+                printf("...done\n");
+            } else {
+                printf("Pruning aborted\n");
+            }
+        } else {
+            printf("Entire map is a contiguous region; no need to prune\n");
+        }
+
+        for (std::deque<cnbt::chunklist*>::iterator i = groups->begin(); i != groups->end(); ++i) {
+            delete (*i);
+        }
+        delete groups;
     } else { // render a map
         char *name, *out;
         cnbt::rendertype rt;
@@ -200,8 +235,7 @@ int main(int argc, char **argv) {
 
         cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir);
         uint8_t *image = r->render_all();
-        if (!image) {
-            ERR("Unable to render image\n");
+        if (!image) { // all printing should happen inside render_all
             return 1;
         }
         cnbt::coord size = r->image_size();
