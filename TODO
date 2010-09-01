@@ -1,14 +1,15 @@
 VERY MUCH TODO
 ========================================
-- add angled oblique generation
 - add support for loading of colorfiles for blocks so it's not a giant hardcoded mess
-- make snow work well
 - make the entitymap less memory leak-y and faster
+- make snow work well
+- add support for side vs top blocks
 - separate bits into library and program
 - add some sort of basic GUI
 
 SHOULD DO
 ========================================
+- rendering methods could use a few bits of cleanup
 - add a bunch of threading to make the rendering not wait for IO
 - add map slicing
 - add night rendering mode with lighting
@@ -21,3 +22,4 @@ POSSIBLE TODO
 DONE
 ========================================
 - add chunk pruning
+- add angled oblique generation
