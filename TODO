@@ -1,5 +1,6 @@
 VERY MUCH TODO
 ========================================
+- make all directions in angled oblique work
 - add support for loading of colorfiles for blocks so it's not a giant hardcoded mess
 - make the entitymap less memory leak-y and faster
 - make snow work well

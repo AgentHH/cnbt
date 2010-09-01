@@ -513,16 +513,37 @@ int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoo
 
     switch (dir) {
         case DIR_NORTHEAST:
-            ci = 2 * (x - z) - 2 * (nx - 1);
+            ci = (nz - 1) + (x - z);
             cj = x + z;
-            i = 2 * (bx - bz) - 2 * (BLOCKS_PER_X - 1);
+            i = (BLOCKS_PER_Z - 1) + (bx - bz);
             j = bx + bz;
+            break;
+        case DIR_SOUTHWEST:
+            ci = (nx - 1) + (z - x);
+            cj = (nx + nz - 2) - (x + z);
+            i = (BLOCKS_PER_X - 1) + (bz - bx);
+            j = (BLOCKS_PER_X + BLOCKS_PER_Z - 2) - (bx + bz);
+            break;
+        case DIR_NORTHWEST:
+            ci = (nx + nz - 2) - (x + z);
+            cj = (nz - 1) + (x - z);
+            i = (BLOCKS_PER_X + BLOCKS_PER_Z - 2) - (bx + bz);
+            j = (BLOCKS_PER_Z - 1) - (bx - bz);
+            break;
+        case DIR_SOUTHEAST:
+            ci = x + z;
+            cj = (nx - 1) + (z - x);
+            i = bx + bz;
+            j = (BLOCKS_PER_X - 1) + (bz - bx);
             break;
         default:
             *offsettop = 0;
             *offsetside = 0;
             return 1;
     }
+
+    ci *= 2;
+    i *= 2;
     j += 2 * (BLOCKS_PER_Y - by - 1);
 
     ci *= BLOCKS_PER_Z;
@@ -633,10 +654,9 @@ coord angledrenderer::image_size(scoord origin, coord dim) {
     switch (dir) {
         case DIR_NORTHEAST:
         case DIR_SOUTHWEST:
-            return coord(2 * (x + z - 1), x + z + BLOCKS_PER_Y * 2);
         case DIR_NORTHWEST:
         case DIR_SOUTHEAST:
-            return coord(x + z, 2 * (x + z - 1) + BLOCKS_PER_Y * 2);
+            return coord(2 * (x + z - 1), x + z + BLOCKS_PER_Y * 2);
         default:
             printf("got bad dir %d\n", dir);
             return coord(0, 0);
@@ -653,10 +673,9 @@ coord angledrenderer::image_size() {
     switch (dir) {
         case DIR_NORTHEAST:
         case DIR_SOUTHWEST:
-            return coord(2 * (nx + nz - 1), nx + nz + BLOCKS_PER_Y * 2);
         case DIR_NORTHWEST:
         case DIR_SOUTHEAST:
-            return coord(nx + nz, 2 * (nx + nz - 1) + BLOCKS_PER_Y * 2);
+            return coord(2 * (nx + nz - 1), nx + nz + BLOCKS_PER_Y * 2);
         default:
             return coord(0, 0);
     }
