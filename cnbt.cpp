@@ -69,6 +69,28 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
                     default:
                         break;
                 }
+            } else {
+                if (!strcmp(argv[i], "ne")) {
+                    if (dir) {
+                        *dir = cnbt::DIR_NORTHEAST;
+                    }
+                    continue;
+                } else if (!strcmp(argv[i], "se")) {
+                    if (dir) {
+                        *dir = cnbt::DIR_SOUTHEAST;
+                    }
+                    continue;
+                } else if (!strcmp(argv[i], "sw")) {
+                    if (dir) {
+                        *dir = cnbt::DIR_SOUTHWEST;
+                    }
+                    continue;
+                } else if (!strcmp(argv[i], "nw")) {
+                    if (dir) {
+                        *dir = cnbt::DIR_NORTHWEST;
+                    }
+                    continue;
+                }
             }
             ERR("Invalid direction \"%s\" specified\n", argv[i]);
             return 1;
@@ -81,6 +103,10 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
             } else if (!strcmp(argv[i], "oblique")) {
                 if (rt) {
                     *rt = cnbt::RENDER_OBLIQUE;
+                }
+            } else if (!strcmp(argv[i], "angled")) {
+                if (rt) {
+                    *rt = cnbt::RENDER_ANGLED;
                 }
             } else {
                 ERR("Invalid rendertype \"%s\" specified\n", argv[i]);
@@ -108,8 +134,8 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
 int main(int argc, char **argv) {
     if (argc < 2) {
         ERR("usage: %s [-d dir] [-r rendertype] path/to/level output.png\n"
-"valid dirs are: n s e w\n"
-"valid rendertypes are: topdown oblique\n", argv[0]);
+"valid dirs are: n ne e se s sw w nw\n"
+"valid rendertypes are: topdown oblique angled\n", argv[0]);
         exit(1);
     }
 

@@ -30,14 +30,19 @@ enum {
 };
 
 enum { // directions are an unsigned 8-bit quantity
-    DIR_NORTH = 0,
-    DIR_EAST = 64,
-    DIR_SOUTH = 128,
-    DIR_WEST = 192,
+    DIR_NORTH     = 0,
+    DIR_NORTHEAST = 32,
+    DIR_EAST      = 64,
+    DIR_SOUTHEAST = 96,
+    DIR_SOUTH     = 128,
+    DIR_SOUTHWEST = 160,
+    DIR_WEST      = 192,
+    DIR_NORTHWEST = 224,
 };
 
 enum rendertype {
     RENDER_TOP_DOWN,
+    RENDER_ANGLED,
     RENDER_OBLIQUE,
     RENDER_OBLIQUE_ANGLED,
 };
@@ -49,6 +54,9 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
 
 int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
 void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em);
+
+int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
+void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em);
 
 struct renderer {
     struct chunkmanager *cm;
@@ -74,6 +82,15 @@ struct obliquerenderer : renderer {
 
 struct topdownrenderer : renderer {
     topdownrenderer(struct chunkmanager *cm, uint8_t dir);
+
+    virtual coord image_size(scoord origin, coord dim);
+    virtual coord image_size();
+    virtual uint8_t *render(scoord origin, coord dim);
+    virtual uint8_t *render_all();
+};
+
+struct angledrenderer : renderer {
+    angledrenderer(struct chunkmanager *cm, uint8_t dir);
 
     virtual coord image_size(scoord origin, coord dim);
     virtual coord image_size();

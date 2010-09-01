@@ -87,6 +87,8 @@ struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t di
             return new topdownrenderer(cm, dir);
         case RENDER_OBLIQUE:
             return new obliquerenderer(cm, dir);
+        case RENDER_ANGLED:
+            return new angledrenderer(cm, dir);
         default:
             return NULL;
     }
@@ -490,6 +492,226 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
     return image;
 }
 uint8_t *topdownrenderer::render_all() {
+    size_t nx, nz;
+    nx = 1 + cm->max->x - cm->min->x;
+    nz = 1 + cm->max->z - cm->min->z;
+    return render(scoord(cm->min->x, cm->min->z), coord(nx, nz));
+}
+// }}}
+// {{{ angled renderer
+int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offsettop, size_t *offsetside) {
+    // x, z are chunk coordinates; 0,0 is the origin
+    size_t x = chunk.first, z = chunk.second;
+    // w, h are number of chunks in the x and z directions
+    size_t nx = dim.first, nz = dim.second;
+    // pw, ph are the pixel widths and heights of the image buffer
+    size_t pi = imagesize.first; //, pj = imagesize.second;
+    // bx, by, bz are block x, y, and z
+    size_t bx = block.x, by = block.y, bz = block.z;
+
+    int64_t i, j, ci, cj;
+
+    switch (dir) {
+        case DIR_NORTHEAST:
+            ci = 2 * (x - z) - 2 * (nx - 1);
+            cj = x + z;
+            i = 2 * (bx - bz) - 2 * (BLOCKS_PER_X - 1);
+            j = bx + bz;
+            break;
+        default:
+            *offsettop = 0;
+            *offsetside = 0;
+            return 1;
+    }
+    j += 2 * (BLOCKS_PER_Y - by - 1);
+
+    ci *= BLOCKS_PER_Z;
+    cj *= BLOCKS_PER_X;
+
+    *offsettop = (ci + pi * cj) + (i + pi * j) - 1;
+    *offsetside = (ci + pi * cj) + (i + pi * (j + 2)) - 1;
+
+    return 0;
+}
+
+void color_angled_pixels(game::color c, uint8_t *buf, size_t offset, coord imagesize) {
+    uint8_t *dest = buf + offset * 3;
+    {
+        game::color temp(dest[0], dest[1], dest[2]);
+        temp.add_above(c);
+        dest[0] = temp.r;
+        dest[1] = temp.g;
+        dest[2] = temp.b;
+    }
+    dest += 3;
+    {
+        game::color temp(dest[0], dest[1], dest[2]);
+        temp.add_above(c);
+        dest[0] = temp.r;
+        dest[1] = temp.g;
+        dest[2] = temp.b;
+    }
+    dest += 3 * (imagesize.first - 1);
+    {
+        game::color temp(dest[0], dest[1], dest[2]);
+        temp.add_above(c);
+        dest[0] = temp.r;
+        dest[1] = temp.g;
+        dest[2] = temp.b;
+    }
+    dest += 3;
+    {
+        game::color temp(dest[0], dest[1], dest[2]);
+        temp.add_above(c);
+        dest[0] = temp.r;
+        dest[1] = temp.g;
+        dest[2] = temp.b;
+    }
+}
+
+// FIXME praying that this works since it's pretty generic
+void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em) { // XXX XXX XXX
+    //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);
+    // x and z are chunk coordinates, starting at 0,0 and going to w-1, h-1
+    // w and h are the number of chunks along the x- and z-axis
+    //size_t x = chunk.first, z = chunk.second;
+    //size_t w = dim.first, h = dim.second;
+    //size_t pi = imagesize.first, pj = imagesize.second;
+
+    for (int _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
+        for (int _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
+            for (int _y = 0; _y < 128; _y++) {
+                uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
+                if (id == 0)
+                    continue;
+
+                game::color pixel;
+                size_t offsettop, offsetside;
+
+                struct game::block *b = static_cast<struct game::block *>(em[id]);
+                if (b == NULL) {
+                    printf("Block %02x not found in hash\n", id);
+                    continue;
+                }
+
+                if (b->onecolor)
+                    pixel = b->brightcolor;
+                else
+                    pixel = game::interpolate_color(b->darkcolor, b->brightcolor, _y);
+
+                if (_y % 2 && pixel.a == 255) {
+                    pixel.add_above(game::color(255, 255, 255, 24));
+                }
+
+                angled_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, _y, _z), dir, &offsettop, &offsetside);
+                color_angled_pixels(pixel, buf, offsettop, imagesize);
+                pixel.add_above(game::color(0, 0, 0, 128));
+                color_angled_pixels(pixel, buf, offsetside, imagesize);
+            }
+        }
+    }
+}
+
+angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir) : renderer(cm, RENDER_ANGLED, dir) {
+    switch (dir) {
+        case DIR_NORTHEAST:
+        case DIR_SOUTHEAST:
+        case DIR_SOUTHWEST:
+        case DIR_NORTHWEST:
+            break;
+        default:
+            dir = DIR_NORTHEAST;
+            break;
+    }
+}
+
+coord angledrenderer::image_size(scoord origin, coord dim) {
+    // returned size is in pixels
+    // the current algorithm will leave a lot of wasted space
+    size_t x = dim.first * BLOCKS_PER_X;
+    size_t z = dim.second * BLOCKS_PER_Z;
+    switch (dir) {
+        case DIR_NORTHEAST:
+        case DIR_SOUTHWEST:
+            return coord(2 * (x + z - 1), x + z + BLOCKS_PER_Y * 2);
+        case DIR_NORTHWEST:
+        case DIR_SOUTHEAST:
+            return coord(x + z, 2 * (x + z - 1) + BLOCKS_PER_Y * 2);
+        default:
+            printf("got bad dir %d\n", dir);
+            return coord(0, 0);
+    }
+}
+
+coord angledrenderer::image_size() {
+    // returned size is in pixels
+    // for overhead, we don't have to think at all
+    // just supply the width / height multiplied by 16
+    size_t nx, nz;
+    nx = (1 + cm->max->x - cm->min->x) * BLOCKS_PER_X;
+    nz = (1 + cm->max->z - cm->min->z) * BLOCKS_PER_Z;
+    switch (dir) {
+        case DIR_NORTHEAST:
+        case DIR_SOUTHWEST:
+            return coord(2 * (nx + nz - 1), nx + nz + BLOCKS_PER_Y * 2);
+        case DIR_NORTHWEST:
+        case DIR_SOUTHEAST:
+            return coord(nx + nz, 2 * (nx + nz - 1) + BLOCKS_PER_Y * 2);
+        default:
+            return coord(0, 0);
+    }
+}
+
+// FIXME: for now, praying that this will work since there's nothing too specific in it
+uint8_t *angledrenderer::render(scoord origin, coord dim) { // XXX XXX XXX
+    // x, z, w, h are all unmodified chunk coordinates
+    int32_t x = origin.first, z = origin.second;
+    size_t nx = dim.first, nz = dim.second;
+
+    // pi, pj are pixel widths and heights for the image
+    coord imagesize = image_size(origin, dim);
+    size_t pi = imagesize.first, pj = imagesize.second;
+
+    if (pi == 0 || pj == 0) {
+        ERR("Error in getting image size\n");
+        return NULL;
+    }
+
+    printf("bounding box is (%d,%d) to (%d, %d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
+    printf("size of box is (%ld,%ld)\n", nx, nz);
+    printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
+    printf("image size is (%lu,%lu)\n", pi, pj);
+
+    // XXX FIXME: this stuff is a memory leak; need to abstract / fix it
+    game::entitymap em;
+    game::init_blocks(em);
+
+    uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
+    if (!image) {
+        ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
+        return NULL;
+    }
+
+    // _x, _z are 0-based chunk coordinates
+    for (size_t _z = 0; _z < nz; _z++) {
+        for (size_t _x = 0; _x < nx; _x++) {
+            struct chunkcoord c(_x + x, _z + z);
+            if (cm->chunk_exists(c)) {
+                //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
+                struct chunkinfo *ci = cm->get_chunk(c);
+                if (!ci) {
+                    ERR("Unable to load chunk (%d,%d), aborting render\n", c.x, c.z);
+                    free(image);
+                    return NULL;
+                }
+                render_angled(ci->c, image, coord(_x, _z), dim, imagesize, dir, em);
+            }
+        }
+    }
+
+    return image;
+}
+uint8_t *angledrenderer::render_all() {
     size_t nx, nz;
     nx = 1 + cm->max->x - cm->min->x;
     nz = 1 + cm->max->z - cm->min->z;
