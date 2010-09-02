@@ -528,7 +528,7 @@ int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoo
             ci = (nx + nz - 2) - (x + z);
             cj = (nz - 1) + (x - z);
             i = (BLOCKS_PER_X + BLOCKS_PER_Z - 2) - (bx + bz);
-            j = (BLOCKS_PER_Z - 1) - (bx - bz);
+            j = (BLOCKS_PER_Z - 1) + (bx - bz);
             break;
         case DIR_SOUTHEAST:
             ci = x + z;
@@ -599,10 +599,31 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
     //size_t w = dim.first, h = dim.second;
     //size_t pi = imagesize.first, pj = imagesize.second;
 
-    for (int _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
-        for (int _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
-            for (int _y = 0; _y < 128; _y++) {
-                uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
+    for (uint8_t _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
+        for (uint8_t _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
+            uint8_t _a, _b;
+            switch (dir) {
+                case DIR_NORTHEAST:
+                    _a = _x;
+                    _b = _z;
+                    break;
+                case DIR_SOUTHEAST:
+                    _a = BLOCKS_PER_X - _x - 1;
+                    _b = _z;
+                    break;
+                case DIR_NORTHWEST:
+                    _a = _x;
+                    _b = BLOCKS_PER_Z - _z - 1;
+                    break;
+                case DIR_SOUTHWEST:
+                    _a = BLOCKS_PER_X - _x - 1;
+                    _b = BLOCKS_PER_Z - _z - 1;
+                    break;
+                default:
+                    return;
+            }
+            for (uint8_t _y = 0; _y < 128; _y++) {
+                uint8_t id = c->blocks[_a * 2048 + _b * 128 + _y];
                 if (id == 0)
                     continue;
 
@@ -624,7 +645,7 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
                     pixel.add_above(game::color(255, 255, 255, 24));
                 }
 
-                angled_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, _y, _z), dir, &offsettop, &offsetside);
+                angled_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_a, _y, _b), dir, &offsettop, &offsetside);
                 color_angled_pixels(pixel, buf, offsettop, imagesize);
                 pixel.add_above(game::color(0, 0, 0, 128));
                 color_angled_pixels(pixel, buf, offsetside, imagesize);
@@ -712,9 +733,31 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) { // XXX XXX XXX
     }
 
     // _x, _z are 0-based chunk coordinates
-    for (size_t _z = 0; _z < nz; _z++) {
-        for (size_t _x = 0; _x < nx; _x++) {
-            struct chunkcoord c(_x + x, _z + z);
+    for (uint32_t _z = 0; _z < nz; _z++) {
+        for (uint32_t _x = 0; _x < nx; _x++) {
+            uint32_t _a, _b;
+            switch (dir) {
+                case DIR_NORTHEAST:
+                    _a = _x;
+                    _b = _z;
+                    break;
+                case DIR_SOUTHEAST:
+                    _a = nx - _x - 1;
+                    _b = _z;
+                    break;
+                case DIR_NORTHWEST:
+                    _a = _x;
+                    _b = nz - _z - 1;
+                    break;
+                case DIR_SOUTHWEST:
+                    _a = nx - _x - 1;
+                    _b = nz - _z - 1;
+                    break;
+                default:
+                    free(image);
+                    return NULL;
+            }
+            struct chunkcoord c(_a + x, _b + z);
             if (cm->chunk_exists(c)) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
@@ -723,7 +766,7 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) { // XXX XXX XXX
                     free(image);
                     return NULL;
                 }
-                render_angled(ci->c, image, coord(_x, _z), dim, imagesize, dir, em);
+                render_angled(ci->c, image, coord(_a, _b), dim, imagesize, dir, em);
             }
         }
     }

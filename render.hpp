@@ -44,7 +44,6 @@ enum rendertype {
     RENDER_TOP_DOWN,
     RENDER_ANGLED,
     RENDER_OBLIQUE,
-    RENDER_OBLIQUE_ANGLED,
 };
 
 int write_png_to_file(uint8_t *buf, size_t w, size_t h, const char *filename);
