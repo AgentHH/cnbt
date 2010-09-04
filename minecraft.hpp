@@ -17,55 +17,32 @@
 #pragma once
 #include "platform.hpp"
 
-#if defined(__GNUC__) && __GNUC__ > 3
-# include <tr1/unordered_map>
-#else
-# include <map>
-#endif
 namespace cnbt {
 namespace game {
-
-#if defined(__GNUC__) && __GNUC__ > 3
-    typedef std::tr1::unordered_map<uint16_t, struct entity*> entitymap;
-#else
-    typedef std::map<uint16_t, struct entity*> entitymap;
-#endif
-
-struct color {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a; // 255 is opaque; 0 is fully transparent
-
-    color() : r(255), g(0), b(255), a(255) {}
-    color(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b), a(255) {}
-    color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
-
-    int add_above(struct color c);
-};
-struct memorycolor {
-    uint8_t *c;
-    memorycolor(uint8_t *c) : c(c) {}
-
-    int add_above(struct color c);
-};
-struct entity {
-    uint16_t id;
-    const char *name;
-
-    entity(uint16_t id, const char *name) : id(id), name(name) {}
-};
-struct block : entity {
-    struct color brightcolor, darkcolor;
-    bool onecolor;
-
-    //block(uint16_t id, const char *name, struct color color) : entity(id, name),
-    //        brightcolor(color), darkcolor(color) {}
-    block(uint16_t id, const char *name, struct color brightcolor, struct color darkcolor, bool onecolor) :
-        entity(id, name), brightcolor(brightcolor), darkcolor(darkcolor), onecolor(onecolor) {}
+enum {
+    CHANNEL_RED   = 0,
+    CHANNEL_GREEN = 1,
+    CHANNEL_BLUE  = 2,
+    CHANNEL_ALPHA = 3,
 };
 
-struct color interpolate_color(struct color x, struct color y, uint8_t pos);
-int init_blocks(entitymap &map);
+enum {
+    ALPHA_OPAQUE = 255,
+    ALPHA_TRANSPARENT = 0,
+};
+
+enum blockflags {
+    FLAG_TRANSPARENT  = 0x02,
+    FLAG_INVALID      = 0x01,
+};
+
+struct blockcolors {
+    uint8_t flags;
+    uint8_t topcolor[128 * 4];
+    uint8_t sidecolor[128 * 4];
+};
+
+void color_add_above(uint8_t *color, const uint8_t *above);
+struct blockcolors *init_block_colors();
 } // end namespace cnbt
 } // end namespace game

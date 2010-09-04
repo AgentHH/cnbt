@@ -147,7 +147,7 @@ int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockco
     return 0;
 }
 
-void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em) {
+void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc) {
     //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);
     // x and z are chunk coordinates, starting at 0,0 and going to w-1, h-1
     // w and h are the number of chunks along the x- and z-axis
@@ -169,39 +169,20 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
                     _b = BLOCKS_PER_Z - _z - 1;
                 }
                 id = c->blocks[_b * 2048 + _a * 128 + _y];
-                if (id == 0)
+                struct game::blockcolors *b = &bc[id];
+                if (b->flags & game::FLAG_INVALID) {
+                    printf("Block %d not found in hash\n", id);
+                } else if (b->flags & game::FLAG_TRANSPARENT) {
                     continue;
+                }
 
                 size_t offsetside, offsettop;
                 oblique_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_b, _y, _a), dir, &offsetside, &offsettop);
                 uint8_t *destside = buf + offsetside * 3;
                 uint8_t *desttop = buf + offsettop * 3;
 
-                struct game::block *b = static_cast<struct game::block *>(em[id]);
-                if (b == NULL) {
-                    printf("Block %02x not found in hash\n", id);
-                    continue;
-                }
-
-                game::color pixel;
-                if (b->onecolor)
-                    pixel = b->brightcolor;
-                else
-                    pixel = game::interpolate_color(b->darkcolor, b->brightcolor, _y);
-
-                game::color top(desttop[0], desttop[1], desttop[2]);
-                top.add_above(pixel);
-                desttop[0] = top.r;
-                desttop[1] = top.g;
-                desttop[2] = top.b;
-
-                pixel.add_above(game::color(0, 0, 0, 128));
-
-                game::color side(destside[0], destside[1], destside[2]);
-                side.add_above(pixel);
-                destside[0] = side.r;
-                destside[1] = side.g;
-                destside[2] = side.b;
+                game::color_add_above(desttop, &b->topcolor[_y * 4]);
+                game::color_add_above(destside, &b->sidecolor[_y * 4]);
             }
         }
     }
@@ -269,15 +250,13 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
 
-    // XXX FIXME: this stuff is a memory leak; need to abstract / fix it
-    game::entitymap em;
-    game::init_blocks(em);
-
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
     }
+
+    game::blockcolors *bc = game::init_block_colors();
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -295,15 +274,14 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
                 if (!ci) {
-                    ERR("Unable to load chunk (%d,%d), aborting render\n", c.x, c.z);
-                    free(image);
-                    return NULL;
+                    ERR("Warning: unable to load chunk (%d,%d)\n", c.x, c.z);
                 }
-                render_oblique(ci->c, image, coord(_a, _b), dim, imagesize, dir, em);
+                render_oblique(ci->c, image, coord(_a, _b), dim, imagesize, dir, bc);
             }
         }
     }
 
+    free(bc);
     return image;
 }
 uint8_t *obliquerenderer::render_all() {
@@ -363,7 +341,7 @@ int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockc
     return 0;
 }
 
-void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em) {
+void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc) {
     //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);
     // x and z are chunk coordinates, starting at 0,0 and going to w-1, h-1
     // w and h are the number of chunks along the x- and z-axis
@@ -373,29 +351,20 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
 
     for (int _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
         for (int _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
-            game::color pixel(255, 255, 255);
             size_t offset;
             top_down_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, 0, _z), dir, &offset);
             uint8_t *dest = buf + offset * 3;
             for (int _y = 0; _y < 128; _y++) {
                 uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
-                if (id == 0)
-                    continue;
-
-                struct game::block *b = static_cast<struct game::block *>(em[id]);
-                if (b == NULL) {
-                    printf("Block %02x not found in hash\n", id);
+                struct game::blockcolors *b = &bc[id];
+                if (b->flags & game::FLAG_INVALID) {
+                    printf("Block %d not found in hash\n", id);
+                } else if (b->flags & game::FLAG_TRANSPARENT) {
                     continue;
                 }
 
-                if (b->onecolor)
-                    pixel.add_above(b->brightcolor);
-                else
-                    pixel.add_above(game::interpolate_color(b->darkcolor, b->brightcolor, _y));
+                game::color_add_above(dest, &b->topcolor[_y * 4]);
             }
-            dest[0] = pixel.r;
-            dest[1] = pixel.g;
-            dest[2] = pixel.b;
         }
     }
 }
@@ -462,15 +431,13 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
 
-    // XXX FIXME: this stuff is a memory leak; need to abstract / fix it
-    game::entitymap em;
-    game::init_blocks(em);
-
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
     }
+
+    game::blockcolors *bc = game::init_block_colors();
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -480,15 +447,15 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
                 if (!ci) {
-                    ERR("Unable to load chunk (%d,%d), aborting render\n", c.x, c.z);
-                    free(image);
-                    return NULL;
+                    ERR("Warning: unable to load chunk (%d,%d)\n", c.x, c.z);
+                    continue;
                 }
-                render_top_down(ci->c, image, coord(_x, _z), dim, imagesize, dir, em);
+                render_top_down(ci->c, image, coord(_x, _z), dim, imagesize, dir, bc);
             }
         }
     }
 
+    free(bc);
     return image;
 }
 uint8_t *topdownrenderer::render_all() {
@@ -555,43 +522,18 @@ int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoo
     return 0;
 }
 
-void color_angled_pixels(game::color c, uint8_t *buf, size_t offset, coord imagesize) {
+inline void color_angled_pixels(uint8_t *buf, size_t offset, coord imagesize, uint8_t *color) {
     uint8_t *dest = buf + offset * 3;
-    {
-        game::color temp(dest[0], dest[1], dest[2]);
-        temp.add_above(c);
-        dest[0] = temp.r;
-        dest[1] = temp.g;
-        dest[2] = temp.b;
-    }
+    game::color_add_above(dest, color);
     dest += 3;
-    {
-        game::color temp(dest[0], dest[1], dest[2]);
-        temp.add_above(c);
-        dest[0] = temp.r;
-        dest[1] = temp.g;
-        dest[2] = temp.b;
-    }
+    game::color_add_above(dest, color);
     dest += 3 * (imagesize.first - 1);
-    {
-        game::color temp(dest[0], dest[1], dest[2]);
-        temp.add_above(c);
-        dest[0] = temp.r;
-        dest[1] = temp.g;
-        dest[2] = temp.b;
-    }
+    game::color_add_above(dest, color);
     dest += 3;
-    {
-        game::color temp(dest[0], dest[1], dest[2]);
-        temp.add_above(c);
-        dest[0] = temp.r;
-        dest[1] = temp.g;
-        dest[2] = temp.b;
-    }
+    game::color_add_above(dest, color);
 }
 
-// FIXME praying that this works since it's pretty generic
-void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::entitymap &em) { // XXX XXX XXX
+void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc) {
     //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);
     // x and z are chunk coordinates, starting at 0,0 and going to w-1, h-1
     // w and h are the number of chunks along the x- and z-axis
@@ -624,31 +566,22 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
             }
             for (uint8_t _y = 0; _y < 128; _y++) {
                 uint8_t id = c->blocks[_a * 2048 + _b * 128 + _y];
-                if (id == 0)
-                    continue;
-
-                game::color pixel;
-                size_t offsettop, offsetside;
-
-                struct game::block *b = static_cast<struct game::block *>(em[id]);
-                if (b == NULL) {
-                    printf("Block %02x not found in hash\n", id);
+                struct game::blockcolors *b = &bc[id];
+                if (b->flags & game::FLAG_INVALID) {
+                    printf("Block %d not found in hash\n", id);
+                } else if (b->flags & game::FLAG_TRANSPARENT) {
                     continue;
                 }
 
-                if (b->onecolor)
-                    pixel = b->brightcolor;
-                else
-                    pixel = game::interpolate_color(b->darkcolor, b->brightcolor, _y);
-
+                size_t offsetside, offsettop;
+                angled_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_a, _y, _b), dir, &offsettop, &offsetside);
+                /*
                 if (_y % 2 && pixel.a == 255) {
                     pixel.add_above(game::color(255, 255, 255, 24));
                 }
-
-                angled_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_a, _y, _b), dir, &offsettop, &offsetside);
-                color_angled_pixels(pixel, buf, offsettop, imagesize);
-                pixel.add_above(game::color(0, 0, 0, 128));
-                color_angled_pixels(pixel, buf, offsetside, imagesize);
+                */
+                color_angled_pixels(buf, offsettop, imagesize, &b->topcolor[_y * 4]);
+                color_angled_pixels(buf, offsetside, imagesize, &b->sidecolor[_y * 4]);
             }
         }
     }
@@ -702,8 +635,7 @@ coord angledrenderer::image_size() {
     }
 }
 
-// FIXME: for now, praying that this will work since there's nothing too specific in it
-uint8_t *angledrenderer::render(scoord origin, coord dim) { // XXX XXX XXX
+uint8_t *angledrenderer::render(scoord origin, coord dim) {
     // x, z, w, h are all unmodified chunk coordinates
     int32_t x = origin.first, z = origin.second;
     size_t nx = dim.first, nz = dim.second;
@@ -722,15 +654,13 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) { // XXX XXX XXX
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
 
-    // XXX FIXME: this stuff is a memory leak; need to abstract / fix it
-    game::entitymap em;
-    game::init_blocks(em);
-
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
     }
+
+    game::blockcolors *bc = game::init_block_colors();
 
     // _x, _z are 0-based chunk coordinates
     for (uint32_t _z = 0; _z < nz; _z++) {
@@ -762,15 +692,15 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) { // XXX XXX XXX
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
                 if (!ci) {
-                    ERR("Unable to load chunk (%d,%d), aborting render\n", c.x, c.z);
-                    free(image);
-                    return NULL;
+                    ERR("Warning: unable to load chunk (%d,%d)\n", c.x, c.z);
+                    continue;
                 }
-                render_angled(ci->c, image, coord(_a, _b), dim, imagesize, dir, em);
+                render_angled(ci->c, image, coord(_a, _b), dim, imagesize, dir, bc);
             }
         }
     }
 
+    free(bc);
     return image;
 }
 uint8_t *angledrenderer::render_all() {
