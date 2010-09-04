@@ -1,5 +1,6 @@
 VERY MUCH TODO
 ========================================
+- add support for loading of colorfiles for blocks so it's not a giant hardcoded mess
 - separate bits into library and program
 - add some sort of basic GUI
 
@@ -21,7 +22,6 @@ DONE
 - add chunk pruning
 - add angled oblique generation
 - make all directions in angled oblique work
-- add support for loading of colorfiles for blocks so it's not a giant hardcoded mess
 - make the entitymap less memory leak-y and faster
 - make snow work well
 - add support for side vs top blocks
