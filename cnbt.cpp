@@ -26,19 +26,22 @@
 #include "minecraft.hpp"
 #include "render.hpp"
 
-int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendertype *rt, uint8_t *dir) {
+int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendertype *rt, uint8_t *dir, bool *alc) {
     int i;
     if (rt) {
-        *rt = cnbt::RENDER_TOP_DOWN;
+        *rt = cnbt::RENDER_ANGLED;
     }
     if (dir) {
-        *dir = cnbt::DIR_NORTH;
+        *dir = cnbt::DIR_NORTHEAST;
     }
     if (world) {
         *world = NULL;
     }
     if (out) {
         *out = NULL;
+    }
+    if (alc) {
+        *alc = false;
     }
 
     for (i = 0; i < argc; i++) {
@@ -112,6 +115,10 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
                 ERR("Invalid rendertype \"%s\" specified\n", argv[i]);
                 return 1;
             }
+        } else if (!strcmp(argv[i], "-a")) {
+            if (alc) {
+                *alc = true;
+            }
         } else if (out && *out) {
             ERR("Too many files specified on command-line\n");
             return 1;
@@ -119,12 +126,12 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
             if (out) {
                 *out = argv[i];
             }
-            //printf("got output %s\n", *out);
+            //printf("got output file %s\n", *out);
         } else {
             if (world) {
                 *world = argv[i];
             }
-            //printf("got directory %s\n", *world);
+            //printf("got world directory %s\n", *world);
         }
     }
 
@@ -133,9 +140,12 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        ERR("usage: %s [-d dir] [-r rendertype] path/to/level output.png\n"
-"valid dirs are: n ne e se s sw w nw\n"
-"valid rendertypes are: topdown oblique angled\n", argv[0]);
+        ERR("usage: %s [-d dir] [-r rendertype] [-a] path/to/level output.png\n"
+"    valid dirs are: n ne e se s sw w nw\n"
+"    valid rendertypes are: topdown oblique angled\n"
+"    -a: alternate dark and light colors for horizontal planes\n"
+"\n"
+"    By default, an angled view towards the NE is rendered\n", argv[0]);
         exit(1);
     }
 
@@ -244,9 +254,10 @@ int main(int argc, char **argv) {
         char *name, *out;
         cnbt::rendertype rt;
         uint8_t dir;
+        bool alc;
         int ret;
 
-        ret = parse_options(argc - 1, argv + 1, &name, &out, &rt, &dir);
+        ret = parse_options(argc - 1, argv + 1, &name, &out, &rt, &dir, &alc);
         if (ret)
             return ret;
         if (name == NULL || out == NULL) {
@@ -263,8 +274,12 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir, true);
+        cnbt::game::blockcolors *bc = cnbt::game::init_block_colors(alc);
+
+        cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir, bc);
         uint8_t *image = r->render_all();
+        free(bc);
+
         if (!image) { // all printing should happen inside render_all
             return 1;
         }

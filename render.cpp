@@ -81,14 +81,14 @@ cleanup_write_png_pcws:
     return 1;
 }
 // }}}
-struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, bool alc) {
+struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, game::blockcolors *bc) {
     switch (rt) {
         case RENDER_TOP_DOWN:
-            return new topdownrenderer(cm, dir, alc);
+            return new topdownrenderer(cm, dir, bc);
         case RENDER_OBLIQUE:
-            return new obliquerenderer(cm, dir, alc);
+            return new obliquerenderer(cm, dir, bc);
         case RENDER_ANGLED:
-            return new angledrenderer(cm, dir, alc);
+            return new angledrenderer(cm, dir, bc);
         default:
             return NULL;
     }
@@ -188,7 +188,7 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
     }
 }
 
-obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir, bool alc) : renderer(cm, RENDER_OBLIQUE, dir, alc) {
+obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc) : renderer(cm, RENDER_OBLIQUE, dir, bc) {
     switch (dir) {
         case DIR_NORTH:
         case DIR_EAST:
@@ -250,13 +250,15 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
 
+    if (bc == NULL) {
+        return NULL;
+    }
+
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
     }
-
-    game::blockcolors *bc = game::init_block_colors(alternate_level_colors);
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -281,7 +283,6 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
         }
     }
 
-    free(bc);
     return image;
 }
 uint8_t *obliquerenderer::render_all() {
@@ -369,7 +370,7 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
     }
 }
 
-topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir, bool alc) : renderer(cm, RENDER_TOP_DOWN, dir, alc) {
+topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc) : renderer(cm, RENDER_TOP_DOWN, dir, bc) {
     switch (dir) {
         case DIR_NORTH:
         case DIR_EAST:
@@ -431,13 +432,15 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
 
+    if (bc == NULL) {
+        return NULL;
+    }
+
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
     }
-
-    game::blockcolors *bc = game::init_block_colors(alternate_level_colors);
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -455,7 +458,6 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
         }
     }
 
-    free(bc);
     return image;
 }
 uint8_t *topdownrenderer::render_all() {
@@ -580,7 +582,7 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
     }
 }
 
-angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir, bool alc) : renderer(cm, RENDER_ANGLED, dir, alc) {
+angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc) : renderer(cm, RENDER_ANGLED, dir, bc) {
     switch (dir) {
         case DIR_NORTHEAST:
         case DIR_SOUTHEAST:
@@ -647,13 +649,15 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) {
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
 
+    if (bc == NULL) {
+        return NULL;
+    }
+
     uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
     }
-
-    game::blockcolors *bc = game::init_block_colors(alternate_level_colors);
 
     // _x, _z are 0-based chunk coordinates
     for (uint32_t _z = 0; _z < nz; _z++) {
@@ -693,7 +697,6 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) {
         }
     }
 
-    free(bc);
     return image;
 }
 uint8_t *angledrenderer::render_all() {

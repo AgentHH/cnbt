@@ -44,6 +44,6 @@ struct blockcolors {
 };
 
 void color_add_above(uint8_t *color, const uint8_t *above);
-struct blockcolors *init_block_colors(bool alternate_level_colors);
+struct blockcolors *init_block_colors(bool alternate_level_colors = false);
 } // end namespace cnbt
 } // end namespace game
