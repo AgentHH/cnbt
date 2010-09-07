@@ -191,12 +191,12 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
 obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir, bool alc) : renderer(cm, RENDER_OBLIQUE, dir, alc) {
     switch (dir) {
         case DIR_NORTH:
-            break;
         case DIR_EAST:
         case DIR_SOUTH:
         case DIR_WEST:
+            break;
         default:
-            dir = DIR_NORTH;
+            this->dir = DIR_NORTH;
             break;
     }
 }
@@ -377,7 +377,7 @@ topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir, bool alc)
         case DIR_WEST:
             break;
         default:
-            dir = DIR_NORTH;
+            this->dir = DIR_NORTH;
             break;
     }
 }
@@ -525,12 +525,10 @@ int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoo
 inline void color_angled_pixels(uint8_t *buf, size_t offset, coord imagesize, uint8_t *color) {
     uint8_t *dest = buf + offset * 3;
     game::color_add_above(dest, color);
-    dest += 3;
+    game::color_add_above(dest + 3, color);
+    dest += 3 * imagesize.first;
     game::color_add_above(dest, color);
-    dest += 3 * (imagesize.first - 1);
-    game::color_add_above(dest, color);
-    dest += 3;
-    game::color_add_above(dest, color);
+    game::color_add_above(dest + 3, color);
 }
 
 void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc) {
@@ -590,7 +588,7 @@ angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir, bool alc) :
         case DIR_NORTHWEST:
             break;
         default:
-            dir = DIR_NORTHEAST;
+            this->dir = DIR_NORTHEAST;
             break;
     }
 }
