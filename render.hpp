@@ -61,8 +61,9 @@ struct renderer {
     struct chunkmanager *cm;
     rendertype rt;
     uint8_t dir; // 0 is north, increases in clockwise direction
+    bool alternate_level_colors;
 
-    renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir) : cm(cm), rt(rt), dir(dir) {}
+    renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, bool alternate_level_colors) : cm(cm), rt(rt), dir(dir), alternate_level_colors(alternate_level_colors) {}
 
     virtual coord image_size(scoord origin, coord dim) = 0;
     virtual coord image_size() = 0;
@@ -71,7 +72,7 @@ struct renderer {
 };
 
 struct obliquerenderer : renderer {
-    obliquerenderer(struct chunkmanager *cm, uint8_t dir);
+    obliquerenderer(struct chunkmanager *cm, uint8_t dir, bool alc);
 
     virtual coord image_size(scoord origin, coord dim);
     virtual coord image_size();
@@ -80,7 +81,7 @@ struct obliquerenderer : renderer {
 };
 
 struct topdownrenderer : renderer {
-    topdownrenderer(struct chunkmanager *cm, uint8_t dir);
+    topdownrenderer(struct chunkmanager *cm, uint8_t dir, bool alc);
 
     virtual coord image_size(scoord origin, coord dim);
     virtual coord image_size();
@@ -89,7 +90,7 @@ struct topdownrenderer : renderer {
 };
 
 struct angledrenderer : renderer {
-    angledrenderer(struct chunkmanager *cm, uint8_t dir);
+    angledrenderer(struct chunkmanager *cm, uint8_t dir, bool alc);
 
     virtual coord image_size(scoord origin, coord dim);
     virtual coord image_size();
@@ -97,6 +98,6 @@ struct angledrenderer : renderer {
     virtual uint8_t *render_all();
 };
 
-struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt = RENDER_TOP_DOWN, uint8_t dir = 0);
+struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, bool alc);
 
 } // end namespace cnbt

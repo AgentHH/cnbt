@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir);
+        cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir, true);
         uint8_t *image = r->render_all();
         if (!image) { // all printing should happen inside render_all
             return 1;
@@ -277,12 +277,6 @@ int main(int argc, char **argv) {
         time_t end = time(NULL);
 
         printf("map render took %lu wallclock seconds\n", end - start);
-
-#if 0
-        for (cnbt::game::entitymap::iterator i = em.begin(); i != em.end(); ++i) {
-            delete((*i).second);
-        }
-#endif
     }
 
     return 0;

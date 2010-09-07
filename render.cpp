@@ -81,14 +81,14 @@ cleanup_write_png_pcws:
     return 1;
 }
 // }}}
-struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir) {
+struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, bool alc) {
     switch (rt) {
         case RENDER_TOP_DOWN:
-            return new topdownrenderer(cm, dir);
+            return new topdownrenderer(cm, dir, alc);
         case RENDER_OBLIQUE:
-            return new obliquerenderer(cm, dir);
+            return new obliquerenderer(cm, dir, alc);
         case RENDER_ANGLED:
-            return new angledrenderer(cm, dir);
+            return new angledrenderer(cm, dir, alc);
         default:
             return NULL;
     }
@@ -172,7 +172,7 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
                 struct game::blockcolors *b = &bc[id];
                 if (b->flags & game::FLAG_INVALID) {
                     printf("Block %d not found in hash\n", id);
-                } else if (b->flags & game::FLAG_TRANSPARENT) {
+                } else if (b->flags & (game::FLAG_TRANSPARENT_TOP | game::FLAG_TRANSPARENT_SIDE)) {
                     continue;
                 }
 
@@ -188,7 +188,7 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
     }
 }
 
-obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir) : renderer(cm, RENDER_OBLIQUE, dir) {
+obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir, bool alc) : renderer(cm, RENDER_OBLIQUE, dir, alc) {
     switch (dir) {
         case DIR_NORTH:
             break;
@@ -256,7 +256,7 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
         return NULL;
     }
 
-    game::blockcolors *bc = game::init_block_colors();
+    game::blockcolors *bc = game::init_block_colors(alternate_level_colors);
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -359,7 +359,7 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
                 struct game::blockcolors *b = &bc[id];
                 if (b->flags & game::FLAG_INVALID) {
                     printf("Block %d not found in hash\n", id);
-                } else if (b->flags & game::FLAG_TRANSPARENT) {
+                } else if (b->flags & (game::FLAG_TRANSPARENT_TOP | game::FLAG_TRANSPARENT_SIDE)) {
                     continue;
                 }
 
@@ -369,7 +369,7 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
     }
 }
 
-topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir) : renderer(cm, RENDER_TOP_DOWN, dir) {
+topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir, bool alc) : renderer(cm, RENDER_TOP_DOWN, dir, alc) {
     switch (dir) {
         case DIR_NORTH:
         case DIR_EAST:
@@ -437,7 +437,7 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
         return NULL;
     }
 
-    game::blockcolors *bc = game::init_block_colors();
+    game::blockcolors *bc = game::init_block_colors(alternate_level_colors);
 
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
@@ -569,17 +569,12 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
                 struct game::blockcolors *b = &bc[id];
                 if (b->flags & game::FLAG_INVALID) {
                     printf("Block %d not found in hash\n", id);
-                } else if (b->flags & game::FLAG_TRANSPARENT) {
+                } else if (b->flags & (game::FLAG_TRANSPARENT_TOP | game::FLAG_TRANSPARENT_SIDE)) {
                     continue;
                 }
 
                 size_t offsetside, offsettop;
                 angled_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_a, _y, _b), dir, &offsettop, &offsetside);
-                /*
-                if (_y % 2 && pixel.a == 255) {
-                    pixel.add_above(game::color(255, 255, 255, 24));
-                }
-                */
                 color_angled_pixels(buf, offsettop, imagesize, &b->topcolor[_y * 4]);
                 color_angled_pixels(buf, offsetside, imagesize, &b->sidecolor[_y * 4]);
             }
@@ -587,7 +582,7 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
     }
 }
 
-angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir) : renderer(cm, RENDER_ANGLED, dir) {
+angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir, bool alc) : renderer(cm, RENDER_ANGLED, dir, alc) {
     switch (dir) {
         case DIR_NORTHEAST:
         case DIR_SOUTHEAST:
@@ -660,7 +655,7 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) {
         return NULL;
     }
 
-    game::blockcolors *bc = game::init_block_colors();
+    game::blockcolors *bc = game::init_block_colors(alternate_level_colors);
 
     // _x, _z are 0-based chunk coordinates
     for (uint32_t _z = 0; _z < nz; _z++) {

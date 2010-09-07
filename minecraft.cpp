@@ -52,87 +52,159 @@ inline void interpolate_color(uint8_t *x, uint8_t *y, uint8_t pos, uint8_t *a) {
 
 // this should probably be turned into a load from file so colors can be easily adjusted
 // I also want to add better color curves instead of just interpolation between two points
-struct blockcolors *init_block_colors() {
+struct blockcolors *init_block_colors(bool alternate_level_colors) {
+    enum {
+        BC_TRANSPARENT = 1,
+        BC_TOP_SINGLE,
+        BC_TOP_SINGLE_UNSHADED,
+        BC_TOP_GRADIENT,
+        BC_TOP_GRADIENT_UNSHADED,
+        BC_TOP_SIDE_SINGLE,
+        BC_TOP_SIDE_SINGLE_UNSHADED,
+        BC_TOP_SIDE_GRADIENT,
+        BC_TOP_SIDE_GRADIENT_UNSHADED,
+    };
     struct block_init {
         uint16_t id;
         const char *name;
-        bool onecolor;
-        uint8_t brightcolor[4];
-        uint8_t darkcolor[4];
+        uint8_t colors;
+        uint8_t ctb[4], ctd[4], csb[4], csd[4];
     };
     const static struct block_init blocks[] = {
-        {0,  "air",                    true,  {  0,   0,   0,   0}},
-        {1,  "stone",                  false, {204, 204, 204, 255}, { 47,  47,  47, 255}},
-        {2,  "grass",                  false, { 10, 224,  10, 255}, {  0,  96,   0, 255}},
-        {3,  "dirt",                   true,  {202, 178,  30, 255}},
-        {4,  "cobblestone",            false, {204, 204, 204, 255}, { 47,  47,  47, 255}},
-        {5,  "wood",                   false, {192, 148,  64, 255}, { 96,  74,  32, 255}},
-        {6,  "sapling",                true,  {161, 182,  78, 192}},
-        {7,  "adminium",               true,  {  0,   0,   0, 255}},
-        {8,  "water",                  false, { 15, 145, 255, 128}, {  0,  58, 144, 128}},
-        {9,  "stationary water",       false, { 15, 145, 255, 128}, {  0,  58, 144, 128}},
-        {10, "lava",                   false, {255, 209,  49, 255}, {213,  79,  13, 255}},
-        {11, "stationary lava",        false, {255, 209,  49, 255}, {213,  79,  13, 255}},
-        {12, "sand",                   false, {249, 250, 150, 255}, {145, 145, 115, 255}},
-        {13, "gravel",                 true,  {159, 159, 159, 255}},
-        {14, "gold ore",               true,  {192, 192,   0, 255}},
-        {15, "iron ore",               true,  {158, 141, 112, 255}},
-        {16, "coal ore",               true,  { 38,  38,  38, 255}},
-        {17, "log",                    false, {192, 148,  64, 255}, { 96,  74,  32, 255}},
-        {18, "leaves",                 true,  { 32, 103,  32,  64}},
-        {19, "sponge",                 true,  {230, 230,   0, 255}},
-        {20, "glass",                  true,  {221, 245, 244,  64}},
-        {35, "cloth",                  true,  {213, 213, 213, 255}},
-        {37, "yellow flower",          true,  {230, 232,  28, 192}},
-        {38, "red rose",               true,  {227,  91,  94, 192}},
-        {39, "brown mushroom",         true,  {145, 117,  67, 192}},
-        {40, "red mushroom",           true,  {227,  48,  49, 192}},
-        {41, "gold block",             true,  {226, 207,   0, 255}},
-        {42, "iron block",             true,  {155, 146, 133, 255}},
-        {43, "double stair",           false, {232, 232, 232, 255}, { 92,  92,  92, 255}},
-        {44, "stair",                  false, {230, 230, 230, 255}, { 90,  90,  90, 255}},
-        {45, "brick",                  false, {192,  92, 101, 255}, { 75,   0,   7, 255}},
-        {46, "TNT",                    true,  {226,   0,  11, 255}},
-        {47, "bookcase",               true,  {167, 152, 107, 255}},
-        {48, "mossy cobblestone",      true,  {133, 155, 133, 255}},
-        {49, "obsidian",               false, {  0,   0,  68, 255}, {  0,   0, 202, 255}},
-        {50, "torch",                  true,  {255, 255,   9, 255}},
-        {51, "fire",                   true,  {255, 127,   0, 191}},
-        {52, "mob spawner",            true,  {  0,   0,   0,   0}},
-        {53, "wooden stairs",          false, {194, 150,  66, 255}, { 98,  76,  34, 255}},
-        {54, "chest",                  false, {188, 144,  60, 255}, { 92,  70,  28, 255}},
-        {55, "redstone wire",          true,  {255,   0,   0, 128}},
-        {56, "diamond ore",            true,  {113, 228, 229, 255}},
-        {57, "diamond block",          true,  {  5, 252, 255, 255}},
-        {58, "workbench",              false, {180, 140,  55, 255}, { 85,  60,  20, 255}},
-        {59, "crops",                  true,  { 68, 192,   0, 192}},
-        {60, "soil",                   true,  {202, 178,  30, 255}},
-        {61, "furnace",                false, {192, 192, 192, 255}, { 40,  40,  40, 255}},
-        {62, "burning furnace",        false, {192, 192, 192, 255}, { 40,  40,  40, 255}},
-        {63, "sign post",              true,  {  0,   0,   0,   0}},
-        {64, "wooden door (bottom}",   true,  {  0,   0,   0,   0}},
-        {65, "ladder",                 true,  {  0,   0,   0,   0}},
-        {66, "minecart rail",          true,  {141, 126,  99, 224}},
-        {67, "cobblestone stairs",     false, {206, 206, 206, 255}, { 49,  49,  49, 255}},
-        {68, "sign",                   true,  {  0,   0,   0,   0}},
-        {69, "lever",                  true,  {  0,   0,   0,   0}},
-        {70, "stone pressure plate",   false, {198, 198, 198, 255}, { 41,  41,  41, 255}},
-        {71, "iron door (bottom}",     true,  {  0,   0,   0,   0}},
-        {72, "wooden pressure plate",  true,  {168, 142,   0, 255}},
-        {73, "redstone ore",           true,  {161,  45,  45, 255}},
-        {74, "lighted redstone ore",   true,  {200,  60,  60, 255}},
-        {75, "redstone torch (off}",   true,  {178,   0,   0, 255}},
-        {76, "redstone torch (on}",    true,  {255,   0,   0, 255}},
-        {77, "stone button",           true,  {  0,   0,   0,   0}},
-        {78, "snow",                   false, {255, 255, 255, 224}, {224, 224, 224, 224}},
-        {79, "ice",                    true,  {255, 255, 255,  10}},
-        {80, "snow block",             false, {255, 255, 255, 255}, {224, 224, 224, 255}},
-        {81, "cactus",                 false, {101, 255, 101, 255}, {  0, 226,   0, 255}},
-        {82, "clay",                   true,  {140, 147, 117, 255}},
-        {83, "reed",                   true,  {177, 244, 170, 255}},
-        {84, "jukebox",                true,  {160, 162, 189, 255}},
-        {85, "fence",                  true,  {  0,   0,   0, 255}},
-        {255, NULL,                    true,  {255,   0, 255, 255}},
+        {0,  "air",                    BC_TRANSPARENT},
+        {1,  "stone",                  BC_TOP_GRADIENT,
+                {204, 204, 204, 255}, { 47,  47,  47, 255}},
+        {2,  "grass",                  BC_TOP_GRADIENT,
+                { 10, 224,  10, 255}, {  0,  96,   0, 255}},
+        {3,  "dirt",                   BC_TOP_SINGLE,
+                {202, 178,  30, 255}},
+        {4,  "cobblestone",            BC_TOP_GRADIENT,
+                {204, 204, 204, 255}, { 47,  47,  47, 255}},
+        {5,  "wood",                   BC_TOP_GRADIENT,
+                {192, 148,  64, 255}, { 96,  74,  32, 255}},
+        {6,  "sapling",                BC_TOP_SINGLE,
+                {161, 182,  78, 192}},
+        {7,  "adminium",               BC_TOP_SINGLE,
+                {  0,   0,   0, 255}},
+        {8,  "water",                  BC_TOP_GRADIENT,
+                { 15, 145, 255, 128}, {  0,  58, 144, 128}},
+        {9,  "stationary water",       BC_TOP_GRADIENT,
+                { 15, 145, 255, 128}, {  0,  58, 144, 128}},
+        {10, "lava",                   BC_TOP_GRADIENT,
+                {255, 209,  49, 255}, {213,  79,  13, 255}},
+        {11, "stationary lava",        BC_TOP_GRADIENT,
+                {255, 209,  49, 255}, {213,  79,  13, 255}},
+        {12, "sand",                   BC_TOP_GRADIENT,
+                {249, 250, 150, 255}, {145, 145, 115, 255}},
+        {13, "gravel",                 BC_TOP_SINGLE,
+                {159, 159, 159, 255}},
+        {14, "gold ore",               BC_TOP_SINGLE,
+                {192, 192,   0, 255}},
+        {15, "iron ore",               BC_TOP_SINGLE,
+                {158, 141, 112, 255}},
+        {16, "coal ore",               BC_TOP_SINGLE,
+                { 38,  38,  38, 255}},
+        {17, "log",                    BC_TOP_GRADIENT,
+                {192, 148,  64, 255}, { 96,  74,  32, 255}},
+        {18, "leaves",                 BC_TOP_SINGLE,
+                { 32, 103,  32,  64}},
+        {19, "sponge",                 BC_TOP_SINGLE,
+                {230, 230,   0, 255}},
+        {20, "glass",                  BC_TOP_SINGLE,
+                {221, 245, 244,  64}},
+        {35, "cloth",                  BC_TOP_SINGLE,
+                {213, 213, 213, 255}},
+        {37, "yellow flower",          BC_TOP_SINGLE,
+                {230, 232,  28, 192}},
+        {38, "red rose",               BC_TOP_SINGLE,
+                {227,  91,  94, 192}},
+        {39, "brown mushroom",         BC_TOP_SINGLE,
+                {145, 117,  67, 192}},
+        {40, "red mushroom",           BC_TOP_SINGLE,
+                {227,  48,  49, 192}},
+        {41, "gold block",             BC_TOP_SINGLE,
+                {226, 207,   0, 255}},
+        {42, "iron block",             BC_TOP_SINGLE,
+                {155, 146, 133, 255}},
+        {43, "double stair",           BC_TOP_GRADIENT,
+                {232, 232, 232, 255}, { 92,  92,  92, 255}},
+        {44, "stair",                  BC_TOP_GRADIENT,
+                {230, 230, 230, 255}, { 90,  90,  90, 255}},
+        {45, "brick",                  BC_TOP_GRADIENT,
+                {192,  92, 101, 255}, { 75,   0,   7, 255}},
+        {46, "TNT",                    BC_TOP_SINGLE,
+                {226,   0,  11, 255}},
+        {47, "bookcase",               BC_TOP_SINGLE,
+                {167, 152, 107, 255}},
+        {48, "mossy cobblestone",      BC_TOP_SINGLE,
+                {133, 155, 133, 255}},
+        {49, "obsidian",               BC_TOP_GRADIENT,
+                {  0,   0,  68, 255}, {  0,   0, 202, 255}},
+        {50, "torch",                  BC_TOP_SINGLE,
+                {255, 255,   9, 255}},
+        {51, "fire",                   BC_TOP_SINGLE,
+                {255, 127,   0, 191}},
+        {52, "mob spawner",            BC_TRANSPARENT},
+        {53, "wooden stairs",          BC_TOP_GRADIENT,
+                {194, 150,  66, 255}, { 98,  76,  34, 255}},
+        {54, "chest",                  BC_TOP_GRADIENT,
+                {188, 144,  60, 255}, { 92,  70,  28, 255}},
+        {55, "redstone wire",          BC_TOP_SINGLE,
+                {255,   0,   0, 128}},
+        {56, "diamond ore",            BC_TOP_SINGLE,
+                {113, 228, 229, 255}},
+        {57, "diamond block",          BC_TOP_SINGLE,
+                {  5, 252, 255, 255}},
+        {58, "workbench",              BC_TOP_GRADIENT,
+                {180, 140,  55, 255}, { 85,  60,  20, 255}},
+        {59, "crops",                  BC_TOP_SINGLE,
+                { 68, 192,   0, 192}},
+        {60, "soil",                   BC_TOP_SINGLE,
+                {202, 178,  30, 255}},
+        {61, "furnace",                BC_TOP_GRADIENT,
+                {192, 192, 192, 255}, { 40,  40,  40, 255}},
+        {62, "burning furnace",        BC_TOP_GRADIENT,
+                {192, 192, 192, 255}, { 40,  40,  40, 255}},
+        {63, "sign post",              BC_TRANSPARENT},
+        {64, "wooden door (bottom}",   BC_TRANSPARENT},
+        {65, "ladder",                 BC_TRANSPARENT},
+        {66, "minecart rail",          BC_TOP_SINGLE,
+                {141, 126,  99, 224}},
+        {67, "cobblestone stairs",     BC_TOP_GRADIENT,
+                {206, 206, 206, 255}, { 49,  49,  49, 255}},
+        {68, "sign",                   BC_TRANSPARENT},
+        {69, "lever",                  BC_TRANSPARENT},
+        {70, "stone pressure plate",   BC_TOP_GRADIENT,
+                {198, 198, 198, 255}, { 41,  41,  41, 255}},
+        {71, "iron door (bottom}",     BC_TRANSPARENT},
+        {72, "wooden pressure plate",  BC_TOP_SINGLE,
+                {168, 142,   0, 255}},
+        {73, "redstone ore",           BC_TOP_SINGLE,
+                {161,  45,  45, 255}},
+        {74, "lighted redstone ore",   BC_TOP_SINGLE,
+                {200,  60,  60, 255}},
+        {75, "redstone torch (off}",   BC_TOP_SINGLE,
+                {178,   0,   0, 255}},
+        {76, "redstone torch (on}",    BC_TOP_SINGLE,
+                {255,   0,   0, 255}},
+        {77, "stone button",           BC_TRANSPARENT},
+        {78, "snow",                   BC_TOP_GRADIENT,
+                {255, 255, 255, 224}, {224, 224, 224, 224}},
+        {79, "ice",                    BC_TOP_SINGLE,
+                {255, 255, 255,  10}},
+        {80, "snow block",             BC_TOP_GRADIENT,
+                {255, 255, 255, 255}, {224, 224, 224, 255}},
+        {81, "cactus",                 BC_TOP_GRADIENT,
+                {101, 255, 101, 255}, {  0, 226,   0, 255}},
+        {82, "clay",                   BC_TOP_SINGLE,
+                {140, 147, 117, 255}},
+        {83, "reed",                   BC_TOP_SINGLE,
+                {177, 244, 170, 255}},
+        {84, "jukebox",                BC_TOP_SINGLE,
+                {160, 162, 189, 255}},
+        {85, "fence",                  BC_TRANSPARENT},
+        {255, NULL,                    BC_TOP_SINGLE,
+                {255,   0, 255, 255}},
     };
 
     struct blockcolors *bc = (struct blockcolors*)malloc(sizeof(struct blockcolors) * 256);
@@ -140,6 +212,9 @@ struct blockcolors *init_block_colors() {
         return NULL;
 
     static const uint8_t invalidcolor[4] = {255, 0, 255, 255};
+    static const uint8_t sideshade[4] = {0, 0, 0, 128};
+    static const uint8_t levelshade[4] = {255, 255, 255, 24};
+
     for (int i = 0; i < 256; i++) {
         struct blockcolors *bct = &bc[i];
         bct->flags = FLAG_INVALID;
@@ -151,31 +226,86 @@ struct blockcolors *init_block_colors() {
 
     struct block_init *temp = (struct block_init*)&blocks[0];
     do {
-        uint8_t brightcolor[4], darkcolor[4];
+        uint8_t ctb[4], ctd[4], csb[4], csd[4];
         struct blockcolors *bct = &bc[temp->id];
 
         bct->flags = 0;
-        memcpy(brightcolor, temp->brightcolor, 4);
-        if (temp->onecolor) {
-            memcpy(darkcolor, temp->brightcolor, 4);
-        } else {
-            if (!memcmp(temp->brightcolor, temp->darkcolor, 4)) {
-                printf("block %s (%d) has two colors that are the same\n", temp->name, temp->id);
-            }
-            memcpy(darkcolor, temp->darkcolor, 4);
+        switch (temp->colors) {
+            case BC_TRANSPARENT:
+                bct->flags |= FLAG_TRANSPARENT_TOP | FLAG_TRANSPARENT_SIDE;
+                temp++;
+                continue;
+            case BC_TOP_SINGLE:
+            case BC_TOP_SINGLE_UNSHADED:
+                memcpy(ctb, temp->ctb, 4);
+                memcpy(ctd, temp->ctb, 4);
+                memcpy(csb, temp->ctb, 4);
+                memcpy(csd, temp->ctb, 4);
+                break;
+            case BC_TOP_GRADIENT:
+                memcpy(ctb, temp->ctb, 4);
+                memcpy(ctd, temp->ctd, 4);
+                memcpy(csb, temp->ctb, 4);
+                memcpy(csd, temp->ctd, 4);
+                break;
+            case BC_TOP_SIDE_SINGLE:
+            case BC_TOP_SIDE_SINGLE_UNSHADED:
+                memcpy(ctb, temp->ctb, 4);
+                memcpy(ctd, temp->ctb, 4);
+                memcpy(csb, temp->csb, 4);
+                memcpy(csb, temp->csb, 4);
+                break;
+            case BC_TOP_SIDE_GRADIENT:
+                memcpy(ctb, temp->ctb, 4);
+                memcpy(ctd, temp->ctd, 4);
+                memcpy(csb, temp->csb, 4);
+                memcpy(csd, temp->csd, 4);
+                break;
+            default:
+                assert(false);
+                continue;
         }
-        if (darkcolor[CHANNEL_ALPHA] == 0 && brightcolor[CHANNEL_ALPHA] == 0) {
-            bct->flags |= FLAG_TRANSPARENT;
+        if (ctb[CHANNEL_ALPHA] == ALPHA_TRANSPARENT
+            && ctb[CHANNEL_ALPHA] == ctd[CHANNEL_ALPHA]) {
+            bct->flags |= FLAG_TRANSPARENT_TOP;
+        }
+        if (csb[CHANNEL_ALPHA] == ALPHA_TRANSPARENT
+            && csb[CHANNEL_ALPHA] == csd[CHANNEL_ALPHA]) {
+            bct->flags |= FLAG_TRANSPARENT_SIDE;
+        }
+        if (bct->flags & (FLAG_TRANSPARENT_TOP | FLAG_TRANSPARENT_SIDE)) {
             temp++;
             continue;
         }
+        switch (temp->colors) {
+            case BC_TOP_SINGLE:
+            case BC_TOP_GRADIENT:
+            case BC_TOP_SIDE_SINGLE:
+            case BC_TOP_SIDE_GRADIENT:
+                color_add_above(csb, sideshade);
+                color_add_above(csd, sideshade);
+                break;
+            default:
+                break;
+        }
+
         for (int i = 0; i < 128; i++) {
-            uint8_t newcolor[4];
-            static const uint8_t sideshade[4] = {0, 0, 0, 128};
-            interpolate_color(darkcolor, brightcolor, i, newcolor);
-            memcpy(&bct->topcolor[i * 4], newcolor, 4);
-            color_add_above(newcolor, sideshade);
-            memcpy(&bct->sidecolor[i * 4], newcolor, 4);
+            uint8_t *topcolor = &bct->topcolor[i * 4];
+            uint8_t *sidecolor = &bct->sidecolor[i * 4];
+            if (!(bct->flags & FLAG_TRANSPARENT_TOP)) {
+                interpolate_color(ctd, ctb, i, topcolor);
+            }
+            if (!(bct->flags & FLAG_TRANSPARENT_SIDE)) {
+                interpolate_color(csd, csb, i, sidecolor);
+            }
+            if (alternate_level_colors && i % 2) {
+                if (topcolor[CHANNEL_ALPHA] == ALPHA_OPAQUE) {
+                    color_add_above(topcolor, levelshade);
+                }
+                if (sidecolor[CHANNEL_ALPHA] == ALPHA_OPAQUE) {
+                    color_add_above(sidecolor, levelshade);
+                }
+            }
         }
 
         temp++;

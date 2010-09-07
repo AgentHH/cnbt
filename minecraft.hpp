@@ -32,8 +32,9 @@ enum {
 };
 
 enum blockflags {
-    FLAG_TRANSPARENT  = 0x02,
-    FLAG_INVALID      = 0x01,
+    FLAG_TRANSPARENT_TOP  = 0x04,
+    FLAG_TRANSPARENT_SIDE = 0x02,
+    FLAG_INVALID          = 0x01,
 };
 
 struct blockcolors {
@@ -43,6 +44,6 @@ struct blockcolors {
 };
 
 void color_add_above(uint8_t *color, const uint8_t *above);
-struct blockcolors *init_block_colors();
+struct blockcolors *init_block_colors(bool alternate_level_colors);
 } // end namespace cnbt
 } // end namespace game
