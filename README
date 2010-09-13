@@ -1,6 +1,10 @@
-This is version 0.1.2 of cnbt, released under the GPLv3.
+This is version 0.1.4 of cnbt, released under the GPLv3 by me, AgentHH.
+Contact me at agenthh@gmail.com.
 
 It uses libpng and zlib.
+
+On Windows:
+- run "cnbt.exe" from a command prompt
 
 How to compile:
 - On most standard UNIX-y systems, 'make' should suffice
