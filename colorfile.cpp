@@ -312,7 +312,7 @@ int eat_colorline(FILE *fp, size_t *line, color *cs) {
                 cur = COLORFILE_C_TOP_BRIGHT;
                 break;
             case '\0':
-                printf("This should never happen %s() %s:%d\n", __func__, __FILE__, __LINE__);
+                printf("This should never happen %s() %s:%d\n", __FUNCTION__, __FILE__, __LINE__);
             default:
                 printf("Invalid color flag '%c' specified on line %lu\n", flagchar, *line);
                 printf("Valid flags are t, T, s, and S, for dark/bright top/side colors\n");
@@ -367,7 +367,7 @@ int eat_colorline(FILE *fp, size_t *line, color *cs) {
                 dest = cs->side_dark;
                 break;
             default:
-                printf("This should never happen %s() %s:%d\n", __func__, __FILE__, __LINE__);
+                printf("This should never happen %s() %s:%d\n", __FUNCTION__, __FILE__, __LINE__);
                 continue;
         }
         memcpy(dest, result, 4);

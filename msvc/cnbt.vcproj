@@ -175,6 +175,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\colorfile.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\level.cpp"
 				>
 			</File>
@@ -218,6 +222,10 @@
 			</File>
 			<File
 				RelativePath="..\minecraft.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\colorfile.hpp"
 				>
 			</File>
 			<File
