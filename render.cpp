@@ -248,7 +248,6 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
     coord imagesize = image_size(origin, dim);
     size_t pi = imagesize.first, pj = imagesize.second;
 
-    printf("bounding box is (%d,%d) to (%d, %d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
     printf("size of box is (%ld,%ld)\n", nx, nz);
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
@@ -437,7 +436,6 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
     coord imagesize = image_size(origin, dim);
     size_t pi = imagesize.first, pj = imagesize.second;
 
-    printf("bounding box is (%d,%d) to (%d, %d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
     printf("size of box is (%ld,%ld)\n", nx, nz);
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);
@@ -661,7 +659,6 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) {
         return NULL;
     }
 
-    printf("bounding box is (%d,%d) to (%d, %d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
     printf("size of box is (%ld,%ld)\n", nx, nz);
     printf("explored area is %lu (%2.0f%% of the total area)\n", cm->chunks.size(), 100 * (double)cm->chunks.size() / (double)(nx * nz));
     printf("image size is (%lu,%lu)\n", pi, pj);

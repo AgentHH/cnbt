@@ -27,7 +27,7 @@
 #include "colorfile.hpp"
 #include "render.hpp"
 
-int parse_options(int argc, char **argv, char **world, char **out, char **colorfile, cnbt::rendertype *rt, uint8_t *dir, bool *alc) {
+int parse_options(int argc, char **argv, char **world, char **out, char **colorfile, cnbt::rendertype *rt, uint8_t *dir, bool *alc, cnbt::scoord *origin, cnbt::coord *dim) {
     int i;
     if (rt) {
         *rt = cnbt::RENDER_ANGLED;
@@ -51,6 +51,10 @@ int parse_options(int argc, char **argv, char **world, char **out, char **colorf
     for (i = 0; i < argc; i++) {
         if (!strcmp(argv[i], "-d")) {
             i++;
+            if (i >= argc) {
+                ERR("No direction specified\n");
+                return 1;
+            }
             if (strlen(argv[i]) == 1) {
                 switch (argv[i][0]) {
                     case 'n':
@@ -103,6 +107,10 @@ int parse_options(int argc, char **argv, char **world, char **out, char **colorf
             return 1;
         } else if (!strcmp(argv[i], "-r")) {
             i++;
+            if (i >= argc) {
+                ERR("No rendertype specified\n");
+                return 1;
+            }
             if (!strcmp(argv[i], "topdown")) {
                 if (rt) {
                     *rt = cnbt::RENDER_TOP_DOWN;
@@ -125,9 +133,58 @@ int parse_options(int argc, char **argv, char **world, char **out, char **colorf
             }
         } else if (!strcmp(argv[i], "-c")) {
             i++;
+            if (i >= argc) {
+                ERR("No colorfile specified\n");
+                return 1;
+            }
             if (colorfile) {
                 *colorfile = argv[i];
                 printf("got color file %s\n", *colorfile);
+            }
+        } else if (!strcmp(argv[i], "-b")) {
+            if (i + 4 >= argc) {
+                ERR("Not enough coordinates for bounding box specified\n");
+                return 1;
+            }
+            i++;
+            if (origin) {
+                char *end;
+                long value = strtol(argv[i], &end, 0);
+                if (end == argv[i]) {
+                    printf("Invalid origin x coordinate\n");
+                    return 1;
+                }
+                origin->first = value;
+            }
+            i++;
+            if (origin) {
+                char *end;
+                long value = strtol(argv[i], &end, 0);
+                if (end == argv[i]) {
+                    printf("Invalid origin z coordinate\n");
+                    return 1;
+                }
+                origin->second = value;
+            }
+            i++;
+            if (dim) {
+                char *end;
+                unsigned long value = strtoul(argv[i], &end, 0);
+                if (end == argv[i]) {
+                    printf("Invalid dimension x coordinate\n");
+                    return 1;
+                }
+                dim->first = value;
+            }
+            i++;
+            if (dim) {
+                char *end;
+                unsigned long value = strtoul(argv[i], &end, 0);
+                if (end == argv[i]) {
+                    printf("Invalid dimension z coordinate\n");
+                    return 1;
+                }
+                dim->second = value;
             }
         } else if (out && *out) {
             ERR("Too many files specified on command-line\n");
@@ -151,7 +208,8 @@ int parse_options(int argc, char **argv, char **world, char **out, char **colorf
 int main(int argc, char **argv) {
     if (argc < 2) {
         ERR(
-"usage: %s [-d dir] [-r rendertype] [-a] [-c colorfile] path/to/level output.png\n"
+"usage: %s [-d dir] [-r rendertype] [-a] [-c colorfile] [-b originx originz areax areaz]\n"
+"              path/to/level output.png\n"
 "       %s -p\n"
 "By default, an angled view towards the NE is rendered\n"
 "\n"
@@ -161,6 +219,10 @@ int main(int argc, char **argv) {
 "        Has no effect when a color file is specified\n"
 "-c: Render the map with a custom color file\n"
 "-p: Prunes any unconnected chunks from a world.\n"
+"-b: Renders only the bounding box specified. Origin is the corner\n"
+"        to render from, area is the number of chunks in the x and z\n"
+"        direction. Area is an unsigned quantity, and the corner is\n"
+"        the \"bottom left\" corner\n"
             , argv[0], argv[0]);
         exit(1);
     }
@@ -271,11 +333,13 @@ int main(int argc, char **argv) {
     } else { // render a map
         char *name, *out, *colorfile;
         cnbt::rendertype rt;
+        cnbt::scoord origin(0, 0);
+        cnbt::coord dim(0, 0);
         uint8_t dir;
         bool alc;
         int ret;
 
-        ret = parse_options(argc - 1, argv + 1, &name, &out, &colorfile, &rt, &dir, &alc);
+        ret = parse_options(argc - 1, argv + 1, &name, &out, &colorfile, &rt, &dir, &alc, &origin, &dim);
         if (ret)
             return ret;
         if (name == NULL || out == NULL) {
@@ -302,14 +366,24 @@ int main(int argc, char **argv) {
             bc = cnbt::game::init_block_colors(alc);
         }
 
-        cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir, bc);
-        uint8_t *image = r->render_all();
+        cnbt::chunkmanager *cm = &l.manager;
+        cnbt::renderer *r = cnbt::get_renderer(cm, rt, dir, bc);
+        uint8_t *image;
+        cnbt::coord size;
+        printf("total bounding box is (%d, %d) to (%d, %d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);
+        if (dim.first > 0 && dim.second > 0) {
+            printf("rendered bounding box is (%d, %d) to (%ld, %ld)\n", origin.first, origin.second, origin.first - dim.first + 1, origin.second - dim.second + 1);
+            image = r->render(origin, dim);
+            size = r->image_size(origin, dim);
+        } else {
+            image = r->render_all();
+            size = r->image_size();
+        }
         free(bc);
 
         if (!image) { // all printing should happen inside render_all
             return 1;
         }
-        cnbt::coord size = r->image_size();
         cnbt::write_png_to_file(image, size.first, size.second, out);
 
         free(image);
