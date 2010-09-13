@@ -8,6 +8,7 @@ SHOULD DO
 - snow still needs a little tweaking
 - rendering methods could use a few bits of cleanup
 - add a bunch of threading to make the rendering not wait for IO
+- add sign callouts
 - add map slicing
 - add night rendering mode with lighting
 - add explored cave detection and rendering
