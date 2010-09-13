@@ -35,6 +35,13 @@ enum blockflags {
     FLAG_TRANSPARENT_TOP  = 0x04,
     FLAG_TRANSPARENT_SIDE = 0x02,
     FLAG_INVALID          = 0x01,
+    FLAG_BACKGROUND       = 0x08,
+    FLAG_NOTINHASH        = 0x80,
+};
+
+enum {
+    BACKGROUND_COLOR = 256,
+    NUM_COLORS = 256,
 };
 
 struct blockcolors {
@@ -45,5 +52,6 @@ struct blockcolors {
 
 void color_add_above(uint8_t *color, const uint8_t *above);
 struct blockcolors *init_block_colors(bool alternate_level_colors = false);
-} // end namespace cnbt
+void interpolate_color(uint8_t *x, uint8_t *y, uint8_t pos, uint8_t *a);
 } // end namespace game
+} // end namespace cnbt

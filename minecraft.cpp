@@ -43,15 +43,14 @@ inline uint8_t linear_interpolate(uint8_t a, uint8_t b, uint8_t pos) {
 }
 
 // position is from 0 to 256, 0 is towards x
-inline void interpolate_color(uint8_t *x, uint8_t *y, uint8_t pos, uint8_t *a) {
+void interpolate_color(uint8_t *x, uint8_t *y, uint8_t pos, uint8_t *a) {
     a[CHANNEL_RED]   = linear_interpolate(x[CHANNEL_RED], y[CHANNEL_RED], pos);
     a[CHANNEL_GREEN] = linear_interpolate(x[CHANNEL_GREEN], y[CHANNEL_GREEN], pos);
     a[CHANNEL_BLUE]  = linear_interpolate(x[CHANNEL_BLUE], y[CHANNEL_BLUE], pos);
     a[CHANNEL_ALPHA] = linear_interpolate(x[CHANNEL_ALPHA], y[CHANNEL_ALPHA], pos);
 }
 
-// this should probably be turned into a load from file so colors can be easily adjusted
-// I also want to add better color curves instead of just interpolation between two points
+// I want to add better color curves instead of just interpolation between two points
 struct blockcolors *init_block_colors(bool alternate_level_colors) {
     enum {
         BC_TRANSPARENT = 1,
@@ -70,6 +69,7 @@ struct blockcolors *init_block_colors(bool alternate_level_colors) {
         uint8_t colors;
         uint8_t ctb[4], ctd[4], csb[4], csd[4];
     };
+    // note: this is constructed to work well with angled
     const static struct block_init blocks[] = {
         {0,  "air",                    BC_TRANSPARENT},
         {1,  "stone",                  BC_TOP_GRADIENT,
@@ -107,7 +107,7 @@ struct blockcolors *init_block_colors(bool alternate_level_colors) {
         {17, "log",                    BC_TOP_GRADIENT,
                 {192, 148,  64, 255}, { 96,  74,  32, 255}},
         {18, "leaves",                 BC_TOP_SINGLE,
-                { 32, 103,  32,  64}},
+                { 32, 103,  32, 128}},
         {19, "sponge",                 BC_TOP_SINGLE,
                 {230, 230,   0, 255}},
         {20, "glass",                  BC_TOP_SINGLE,
@@ -207,20 +207,29 @@ struct blockcolors *init_block_colors(bool alternate_level_colors) {
                 {255,   0, 255, 255}},
     };
 
-    struct blockcolors *bc = (struct blockcolors*)malloc(sizeof(struct blockcolors) * 256);
+    struct blockcolors *bc = (struct blockcolors*)malloc(sizeof(struct blockcolors) * (NUM_COLORS + 1));
     if (!bc)
         return NULL;
 
     static const uint8_t invalidcolor[4] = {255, 0, 255, 255};
     static const uint8_t sideshade[4] = {0, 0, 0, 128};
     static const uint8_t levelshade[4] = {255, 255, 255, 24};
+    static const uint8_t background[4] = {0, 0, 0, 255};
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < NUM_COLORS; i++) {
         struct blockcolors *bct = &bc[i];
         bct->flags = FLAG_INVALID;
         for (int j = 0; j < 128; j++) {
             memcpy(&bct->topcolor[j * 4], invalidcolor, 4);
             memcpy(&bct->sidecolor[j * 4], invalidcolor, 4);
+        }
+    }
+    {
+        struct blockcolors *bct = &bc[BACKGROUND_COLOR]; // background
+        bct->flags = FLAG_BACKGROUND;
+        for (int j = 0; j < 128; j++) {
+            memcpy(&bct->topcolor[j * 4], background, 4);
+            memcpy(&bct->sidecolor[j * 4], background, 4);
         }
     }
 

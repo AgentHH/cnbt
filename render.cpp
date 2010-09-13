@@ -171,7 +171,10 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
                 id = c->blocks[_b * 2048 + _a * 128 + _y];
                 struct game::blockcolors *b = &bc[id];
                 if (b->flags & game::FLAG_INVALID) {
-                    printf("Block %d not found in hash\n", id);
+                    if (!(b->flags & game::FLAG_NOTINHASH)) {
+                        printf("Block %d not found in hash\n", id);
+                        b->flags |= game::FLAG_NOTINHASH;
+                    }
                 } else if (b->flags & (game::FLAG_TRANSPARENT_TOP | game::FLAG_TRANSPARENT_SIDE)) {
                     continue;
                 }
@@ -254,10 +257,14 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
         return NULL;
     }
 
-    uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
+    uint8_t *image = (uint8_t*)malloc(pi * pj * 3 * sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
+    }
+
+    for (size_t i = 0; i < pi * pj; i++) {
+        memcpy(&image[i * 3], &bc[game::BACKGROUND_COLOR].topcolor[64 * 4], 3);
     }
 
     // _x, _z are 0-based chunk coordinates
@@ -359,7 +366,10 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
                 uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
                 struct game::blockcolors *b = &bc[id];
                 if (b->flags & game::FLAG_INVALID) {
-                    printf("Block %d not found in hash\n", id);
+                    if (!(b->flags & game::FLAG_NOTINHASH)) {
+                        printf("Block %d not found in hash\n", id);
+                        b->flags |= game::FLAG_NOTINHASH;
+                    }
                 } else if (b->flags & (game::FLAG_TRANSPARENT_TOP | game::FLAG_TRANSPARENT_SIDE)) {
                     continue;
                 }
@@ -436,10 +446,14 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
         return NULL;
     }
 
-    uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
+    uint8_t *image = (uint8_t*)malloc(pi * pj * 3 * sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
+    }
+
+    for (size_t i = 0; i < pi * pj; i++) {
+        memcpy(&image[i * 3], &bc[game::BACKGROUND_COLOR].topcolor[64 * 4], 3);
     }
 
     // _x, _z are 0-based chunk coordinates
@@ -568,7 +582,10 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
                 uint8_t id = c->blocks[_a * 2048 + _b * 128 + _y];
                 struct game::blockcolors *b = &bc[id];
                 if (b->flags & game::FLAG_INVALID) {
-                    printf("Block %d not found in hash\n", id);
+                    if (!(b->flags & game::FLAG_NOTINHASH)) {
+                        printf("Block %d not found in hash\n", id);
+                        b->flags |= game::FLAG_NOTINHASH;
+                    }
                 } else if (b->flags & (game::FLAG_TRANSPARENT_TOP | game::FLAG_TRANSPARENT_SIDE)) {
                     continue;
                 }
@@ -653,10 +670,14 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) {
         return NULL;
     }
 
-    uint8_t *image = (uint8_t*)calloc(pi * pj * 3, sizeof(uint8_t));
+    uint8_t *image = (uint8_t*)malloc(pi * pj * 3 * sizeof(uint8_t));
     if (!image) {
         ERR("Unable to allocate image buffer. The map may be too large. Try pruning it.\n");
         return NULL;
+    }
+
+    for (size_t i = 0; i < pi * pj; i++) {
+        memcpy(&image[i * 3], &bc[game::BACKGROUND_COLOR].topcolor[64 * 4], 3);
     }
 
     // _x, _z are 0-based chunk coordinates

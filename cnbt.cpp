@@ -24,9 +24,10 @@
 #include "chunk.hpp"
 #include "coord.hpp"
 #include "minecraft.hpp"
+#include "colorfile.hpp"
 #include "render.hpp"
 
-int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendertype *rt, uint8_t *dir, bool *alc) {
+int parse_options(int argc, char **argv, char **world, char **out, char **colorfile, cnbt::rendertype *rt, uint8_t *dir, bool *alc) {
     int i;
     if (rt) {
         *rt = cnbt::RENDER_ANGLED;
@@ -39,6 +40,9 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
     }
     if (out) {
         *out = NULL;
+    }
+    if (colorfile) {
+        *colorfile = NULL;
     }
     if (alc) {
         *alc = false;
@@ -119,19 +123,25 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
             if (alc) {
                 *alc = true;
             }
+        } else if (!strcmp(argv[i], "-c")) {
+            i++;
+            if (colorfile) {
+                *colorfile = argv[i];
+                printf("got color file %s\n", *colorfile);
+            }
         } else if (out && *out) {
             ERR("Too many files specified on command-line\n");
             return 1;
         } else if (world && *world) {
             if (out) {
                 *out = argv[i];
+                printf("got output file %s\n", *out);
             }
-            //printf("got output file %s\n", *out);
         } else {
             if (world) {
                 *world = argv[i];
+                printf("got world directory %s\n", *world);
             }
-            //printf("got world directory %s\n", *world);
         }
     }
 
@@ -140,12 +150,18 @@ int parse_options(int argc, char **argv, char **world, char **out, cnbt::rendert
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        ERR("usage: %s [-d dir] [-r rendertype] [-a] path/to/level output.png\n"
-"    valid dirs are: n ne e se s sw w nw\n"
-"    valid rendertypes are: topdown oblique angled\n"
-"    -a: alternate dark and light colors for horizontal planes\n"
+        ERR(
+"usage: %s [-d dir] [-r rendertype] [-a] [-c colorfile] path/to/level output.png\n"
+"       %s -p\n"
+"By default, an angled view towards the NE is rendered\n"
 "\n"
-"    By default, an angled view towards the NE is rendered\n", argv[0]);
+"-d: Valid dirs are: n ne e se s sw w nw\n"
+"-r: Valid rendertypes are: topdown oblique angled\n"
+"-a: Alternate dark and light colors for horizontal planes\n"
+"        Has no effect when a color file is specified\n"
+"-c: Render the map with a custom color file\n"
+"-p: Prunes any unconnected chunks from a world.\n"
+            , argv[0], argv[0]);
         exit(1);
     }
 
@@ -175,7 +191,7 @@ int main(int argc, char **argv) {
         gzclose(fp);
 
         delete(t);
-    } else if (!strcmp(argv[1], "-c")) { // for testing base36 string generation
+    } else if (!strcmp(argv[1], "-o")) { // for testing base36 string generation
         if (argc < 4) {
             ERR("need x and z\n");
             exit(1);
@@ -229,6 +245,8 @@ int main(int argc, char **argv) {
 
             printf("\nThe largest contiguous region has %lu out of %lu chunks total (%g%%)\n", max, cm->chunks.size(), 100 * (double)max / (double)cm->chunks.size());
 
+            printf("THIS OPERATION CANNOT BE UNDONE\n");
+            printf("ALWAYS MAKE A BACKUP BEFORE PRUNING\n");
             printf("Are you sure you want to delete %lu chunks?\n", sum);
             printf("Type \"yes\" to prune, or anything else to abort.\n");
 
@@ -251,13 +269,13 @@ int main(int argc, char **argv) {
         }
         delete groups;
     } else { // render a map
-        char *name, *out;
+        char *name, *out, *colorfile;
         cnbt::rendertype rt;
         uint8_t dir;
         bool alc;
         int ret;
 
-        ret = parse_options(argc - 1, argv + 1, &name, &out, &rt, &dir, &alc);
+        ret = parse_options(argc - 1, argv + 1, &name, &out, &colorfile, &rt, &dir, &alc);
         if (ret)
             return ret;
         if (name == NULL || out == NULL) {
@@ -274,7 +292,15 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        cnbt::game::blockcolors *bc = cnbt::game::init_block_colors(alc);
+        cnbt::game::blockcolors *bc;
+        if (colorfile) {
+            bc = cnbt::game::init_block_colors_from_file(colorfile);
+            if (!bc) {
+                return 1;
+            }
+        } else {
+            bc = cnbt::game::init_block_colors(alc);
+        }
 
         cnbt::renderer *r = cnbt::get_renderer(&l.manager, rt, dir, bc);
         uint8_t *image = r->render_all();

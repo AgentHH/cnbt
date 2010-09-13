@@ -12,7 +12,8 @@ How to compile:
     Add the includes / libraries to VS, and it should compile
     properly. The project files are from VS2008.
 
+For help:
+- run "./cnbt" with no arguments
+
 To edit colors:
-- Muck around in minecraft.cpp for block colors.
-- To change the level of grey applied to the side of blocks in
-      oblique, look at line 196 of render.cpp.
+- See README-colors.txt

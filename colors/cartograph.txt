@@ -1,0 +1,92 @@
+cnbtcolors v1
+options:
+--------------------------
+# shamelessly stolen from pynemap, who stole it from cartograph
+# warning: this is very rough and bad and doesn't really work
+# this is just here as an example of what you can do
+0  t 255,255,255,0         #air
+1  t 120,120,120,255       #stone
+2  t 117,176,73,255        #grass
+3  t 134,96,67,255         #dirt
+4  t 115,115,115,255       #cobblestone
+5  t 157,128,79,255        #wood (planks)
+6  t 120,120,120,0         #sapling
+7  t 84,84,84,255          #adminium
+8  t 38,92,255,51          #water (flowing?)
+9  t 38,92,255,51          #water (source)
+10 t 255,90,0,255          #lava (flowing?)
+11 t 255,90,0,255          #lava (source)
+12 t 218,210,158,255       #sand
+13 t 136,126,126,255       #gravel
+14 t 143,140,125,255       #gold ore
+15 t 136,130,127,255       #iron ore
+16 t 115,115,115,255       #coal ore
+17 t 102,81,51,255         #log
+18 t 60,192,41,100         #leaves
+19 t 247,232,43,255        #sponge
+20 t 255,255,255,64        #glass
+21 t 207,24,24,255         #red cloth
+22 t 234,140,15,255        #orange cloth
+23 t 242,231,6,255         #yellow cloth
+24 t 45,204,101,255        #lime cloth
+25 t 68,194,54,255         #green cloth
+26 t 94,208,191,255        #aqua cloth
+27 t 111,149,251,255       #cyan cloth
+28 t 61,45,255,255         #blue cloth
+29 t 167,41,250,255        #purple cloth
+30 t 122,112,250,255       #indigo cloth
+31 t 193,51,240,255        #violet cloth
+32 t 249,43,162,255        #magenta cloth
+33 t 255,106,252,255       #pink cloth
+34 t 0,0,0,255             #black cloth
+35 t 222,222,222,255       #white cloth
+36 t 222,222,222,255       #white cloth
+37 t 255,255,0,255         #yellow flower
+38 t 255,0,0,255           #red flower
+39 t 193,168,108,127       #brown mushroom
+40 t 255,0,0,127           #red mushroom
+41 t 231,165,45,255        #gold block
+42 t 191,191,191,255       #iron block
+43 t 200,200,200,255       #double stair
+44 t 200,200,200,255       #stair
+45 t 170,86,62,255         #brick
+46 t 160,83,65,255         #tnt
+47 t 157,128,79,255        #bookcase
+48 t 115,115,115,255       #mossy cobblestone
+49 t 26,11,43,255          #obsidian
+50 t 245,220,50,200        #torch
+51 t 255,170,30,200        #fire
+52 t 245,220,50,255        #mob spawner
+53 t 157,128,79,255        #wooden stairs
+54 t 125,91,38,255         #chest
+55 t 245,220,50,255        #redstone wire
+56 t 129,140,143,255       #diamond ore
+57 t 45,166,152,255        #diamond block
+58 t 114,88,56,255         #workbench
+59 t 146,192,0,255         #crops
+60 t 95,58,30,255          #tilled dirt
+61 t 96,96,96,255          #furnace
+62 t 96,96,96,255          #lit furnace
+63 t 111,91,54,255         #sign post
+64 t 136,109,67,255        #wooden door
+65 t 181,140,64,32         #ladder
+66 t 150,134,102,180       #minecart rail
+67 t 115,115,115,255       #stone stairs
+68 t 111,91,54,255         #sign
+69 t 111,91,54,200         #lever
+70 t 120,120,120,255       #stone pressure plate
+71 t 191,191,191,255       #iron door
+72 t 157,128,79,255        #wooden pressure plate
+73 t 131,107,107,255       #redstone ore
+74 t 131,107,107,255       #lit redstone ore
+75 t 181,140,64,32         #redstone torch (off)
+76 t 255,0,0,200           #redstone torch (on)
+77 t 120,120,120,63        #stone button
+78 t 255,255,255,255       #snow
+79 t 83,113,163,51         #ice
+80 t 250,250,250,255       #snow block
+81 t 25,120,25,255         #cactus
+82 t 151,157,169,255       #clay
+83 t 193,234,150,255       #reeds
+84 t 107,71,50,255         #jukebox
+85 t 157,128,79,191        #fence
