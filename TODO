@@ -14,6 +14,9 @@ SHOULD DO
 - add map slicing
 - add night rendering mode with lighting
 - add explored cave detection and rendering
+- add spawn point callout
+- add side view mode
+- add "slicing"
 
 POSSIBLE TODO
 ========================================
