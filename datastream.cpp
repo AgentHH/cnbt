@@ -28,13 +28,13 @@ void byteswap(uint8_t *data, size_t bytes) {
     }
 }
 
-#define htonf(expr) ntohf(expr)
-#define htond(expr) ntohd(expr)
-#define htons(expr) ntohs(expr)
-#define htonl(expr) ntohl(expr)
-#define htonll(expr) ntohll(expr)
+#define cnbt_htonf(expr) cnbt_ntohf(expr)
+#define cnbt_htond(expr) cnbt_ntohd(expr)
+#define cnbt_htons(expr) cnbt_ntohs(expr)
+#define cnbt_htonl(expr) cnbt_ntohl(expr)
+#define cnbt_htonll(expr) cnbt_ntohll(expr)
 
-float ntohf(float f) {
+float cnbt_ntohf(float f) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     union {
         float x;
@@ -54,7 +54,7 @@ float ntohf(float f) {
     return f;
 #endif
 }
-double ntohd(double d) {
+double cnbt_ntohd(double d) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     union {
         double x;
@@ -74,7 +74,7 @@ double ntohd(double d) {
     return d;
 #endif
 }
-uint16_t ntohs(uint16_t i) {
+uint16_t cnbt_ntohs(uint16_t i) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # ifdef _MSC_VER
     return _byteswap_ushort(i);
@@ -88,7 +88,7 @@ uint16_t ntohs(uint16_t i) {
     return i;
 #endif
 }
-uint32_t ntohl(uint32_t i) {
+uint32_t cnbt_ntohl(uint32_t i) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # ifdef _MSC_VER
     return _byteswap_ulong(i);
@@ -102,7 +102,7 @@ uint32_t ntohl(uint32_t i) {
     return i;
 #endif
 }
-uint64_t ntohll(uint64_t i) {
+uint64_t cnbt_ntohll(uint64_t i) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # ifdef _MSC_VER
     return _byteswap_uint64(i);
@@ -163,31 +163,31 @@ uint8_t stream_eater::eat_byte() {
 }
 uint16_t stream_eater::eat_short() {
     assert(remain() >= sizeof(uint16_t));
-    uint16_t ret = ntohs(*(uint16_t*)&buf[pos]);
+    uint16_t ret = cnbt_ntohs(*(uint16_t*)&buf[pos]);
     pos += sizeof(uint16_t);
     return ret;
 }
 uint32_t stream_eater::eat_int() {
     assert(remain() >= sizeof(uint32_t));
-    uint32_t ret = ntohl(*(uint32_t*)&buf[pos]);
+    uint32_t ret = cnbt_ntohl(*(uint32_t*)&buf[pos]);
     pos += sizeof(uint32_t);
     return ret;
 }
 uint64_t stream_eater::eat_long() {
     assert(remain() >= sizeof(uint64_t));
-    uint64_t ret = ntohll(*(uint64_t*)&buf[pos]);
+    uint64_t ret = cnbt_ntohll(*(uint64_t*)&buf[pos]);
     pos += sizeof(uint64_t);
     return ret;
 }
 float stream_eater::eat_float() {
     assert(remain() >= sizeof(float));
-    float ret = ntohf(*(float*)&buf[pos]);
+    float ret = cnbt_ntohf(*(float*)&buf[pos]);
     pos += sizeof(float);
     return ret;
 }
 double stream_eater::eat_double() {
     assert(remain() >= sizeof(double));
-    double ret = ntohd(*(double*)&buf[pos]);
+    double ret = cnbt_ntohd(*(double*)&buf[pos]);
     pos += sizeof(double);
     return ret;
 }
@@ -332,7 +332,7 @@ int stream_writer::write_short(uint16_t s) {
             return 1;
         }
     }
-    *(uint16_t*)&buf[pos] = htons(s);
+    *(uint16_t*)&buf[pos] = cnbt_htons(s);
     pos += sizeof(uint16_t);
 
     return 0;
@@ -343,7 +343,7 @@ int stream_writer::write_int(uint32_t i) {
             return 1;
         }
     }
-    *(uint32_t*)&buf[pos] = htonl(i);
+    *(uint32_t*)&buf[pos] = cnbt_htonl(i);
     pos += sizeof(uint32_t);
 
     return 0;
@@ -354,7 +354,7 @@ int stream_writer::write_long(uint64_t l) {
             return 1;
         }
     }
-    *(uint64_t*)&buf[pos] = htonll(l);
+    *(uint64_t*)&buf[pos] = cnbt_htonll(l);
     pos += sizeof(uint64_t);
 
     return 0;
@@ -365,7 +365,7 @@ int stream_writer::write_float(float f) {
             return 1;
         }
     }
-    *(float*)&buf[pos] = htonf(f);
+    *(float*)&buf[pos] = cnbt_htonf(f);
     pos += sizeof(float);
 
     return 0;
@@ -376,7 +376,7 @@ int stream_writer::write_double(double d) {
             return 1;
         }
     }
-    *(double*)&buf[pos] = htond(d);
+    *(double*)&buf[pos] = cnbt_htond(d);
     pos += sizeof(double);
 
     return 0;
@@ -416,7 +416,7 @@ int stream_writer::write_string(uint8_t *s) {
             return 1;
         }
     }
-    *(uint16_t*)&buf[pos] = htons((uint16_t)l);
+    *(uint16_t*)&buf[pos] = cnbt_htons((uint16_t)l);
     pos += sizeof(uint16_t);
     memcpy(&buf[pos], s, l);
     pos += l;
@@ -471,10 +471,3 @@ int stream_writer::write_base36_int(int32_t n) {
 }
 // }}}
 } // end namespace cnbt
-
-// I am not proud
-#undef htonf
-#undef htond
-#undef htons
-#undef htonl
-#undef htonll
