@@ -21,14 +21,17 @@ typedef std::pair<size_t, size_t> coord;
 typedef std::pair<int32_t, int32_t> scoord;
 
 struct chunkcoord {
-    int32_t x, z;
+    int32_t x, z, d;
 
-    chunkcoord() : x(0), z(0) {}
-    chunkcoord(int32_t x, int32_t z) : x(x), z(z) {}
+    chunkcoord() : x(0), z(0), d(0) {}
+    chunkcoord(int32_t x, int32_t z) : x(x), z(z), d(0) {}
+    chunkcoord(int32_t x, int32_t z, int32_t d) : x(x), z(z), d(d) {}
     bool operator<(const chunkcoord &other) const {
         if (x < other.x)
             return true;
         if (x == other.x && z < other.z)
+            return true;
+        if (x == other.x && z == other.z && d < other.d)
             return true;
         return false;
     }
