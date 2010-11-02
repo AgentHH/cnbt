@@ -116,10 +116,15 @@ chunkinfo::~chunkinfo() {
         delete c;
 }
 
-chunkmanager::chunkmanager(const char *path) {
-    this->path = strdup(path);
+chunkmanager::chunkmanager(const char *path, int32_t dim) {
+    if (path) {
+        this->path = strdup(path);
+    } else {
+        this->path = "";
+    }
     max = NULL;
     min = NULL;
+    this->dim = dim;
 }
 chunkmanager::~chunkmanager() {
     free((void*)path);
@@ -151,6 +156,9 @@ int chunkmanager::delete_chunk(struct chunkcoord c) {
 
 int chunkmanager::add_new_chunk(struct chunkcoord c) {
     struct chunkinfo *ci = new struct chunkinfo(c);
+    if (c.d != dim) {
+        return 2;
+    }
     if (chunks.count(c)) {
         return 1;
     }
@@ -179,6 +187,14 @@ int chunkmanager::add_new_chunk(struct chunkcoord c) {
 int chunkmanager::load_chunk_raw(struct chunkinfo *ci) {
     uint8_t buf[32];
     char *chunkpath;
+    if (!ci) {
+        ERR("chunkinfo passed to load_chunk_raw is NULL\n");
+        return 1;
+    }
+    if (ci->coord.d != dim) {
+        ERR("chunkinfo passed to load_chunk_raw had wrong dimension %d\n", ci->coord.d);
+        return 1;
+    }
     chunkcoord_to_filename(ci->coord, buf, 32);
     filepath_merge(&chunkpath, path, (char*)buf);
     struct tag *t = eat_nbt_file(chunkpath);
@@ -223,11 +239,14 @@ int chunkmanager::load_chunk(struct chunkinfo *ci) {
 }
 
 bool chunkmanager::chunk_exists(int32_t x, int32_t z) {
-    struct chunkcoord c(x, z);
+    struct chunkcoord c(x, z, dim);
     return chunk_exists(c);
 }
 
 bool chunkmanager::chunk_exists(struct chunkcoord c) {
+    if (c.d != dim) {
+        return false;
+    }
     return chunks.find(c) != chunks.end();
 }
 
@@ -373,4 +392,61 @@ std::deque<chunklist*> *chunkmanager::find_chunk_groups() {
     }
     return ret;
 }
+
+dimensionmanager::dimensionmanager(const char *path) {
+    if (path) {
+        this->path = strdup(path);
+    } else {
+        this->path = "";
+    }
+}
+
+dimensionmanager::~dimensionmanager() {
+    free((void*)path);
+    for (chunkmanagermap::iterator i = chunkmanagers.begin(); i != chunkmanagers.end(); ++i) {
+        struct chunkmanager *cm = (*i).second;
+        if (cm)
+            delete cm;
+    }
+}
+
+int dimensionmanager::add_new_chunk(struct chunkcoord c) {
+    int dim = c.d;
+    struct chunkmanager *cm = get_chunk_manager(dim);
+    if (!cm) {
+        cm = add_new_chunk_manager(dim);
+    }
+
+    return cm->add_new_chunk(c);
+}
+
+struct chunkmanager *dimensionmanager::add_new_chunk_manager(int32_t dim) {
+    struct chunkmanager *cm = NULL;
+
+    if (chunkmanagers[dim])
+        return chunkmanagers[dim];
+
+    if (dim == 0) {
+        cm = new chunkmanager(path, dim); // special case for main world
+    } else if (dim > 0) {
+        char *newpath;
+        char dimdir[16];
+        snprintf(dimdir, 16, "%s%d", LEVEL_DIMENSION_TAG, dim);
+        filepath_merge(&newpath, path, dimdir);
+        cm = new chunkmanager(newpath, dim);
+        free(newpath);
+    } else {
+        printf("Attempting to add a dimension less than zero (%d)\n", dim);
+        return NULL;
+    }
+
+    chunkmanagers[dim] = cm;
+
+    return cm;
+}
+
+struct chunkmanager *dimensionmanager::get_chunk_manager(int32_t dim) {
+    return chunkmanagers[dim];
+}
+
 } // end namespace cnbt

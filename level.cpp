@@ -40,7 +40,7 @@ int parse_chunk_file_name(const char *name, int32_t *x, int32_t *z) {
 }
 
 #ifdef _WIN32
-int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim) {
+int find_chunk_files(struct dimensionmanager *dm, const char *path, int32_t dim) {
     WIN32_FIND_DATA finddata;
     HANDLE handle;
 
@@ -69,7 +69,7 @@ int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim) {
                 }
             }
             filepath_merge(&newpath, path, finddata.cFileName);
-            int ret = find_chunk_files(cm, newpath, newdim);
+            int ret = find_chunk_files(dm, newpath, newdim);
             free(newpath);
             if (ret) {
                 FindClose(handle);
@@ -83,7 +83,7 @@ int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim) {
             //printf("found chunk (%d,%d)\n", x, y);
 
             struct chunkcoord c(x, z, dim);
-            ret = cm->add_new_chunk(c);
+            ret = dm->add_new_chunk(c);
             if (ret) {
                 printf("Warning: possible duplicate chunk found\n");
             }
@@ -96,7 +96,7 @@ int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim) {
     return 0;
 }
 #else
-int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim) {
+int find_chunk_files(struct dimensionmanager *dm, const char *path, int32_t dim) {
     DIR *dir;
     struct dirent *dirp;
 
@@ -118,15 +118,14 @@ int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim) {
             int32_t newdim = dim;
             filepath_merge(&newpath, path, dirp->d_name);
 
-            if (!memcmp(path, LEVEL_DIMENSION_TAG, sizeof(LEVEL_DIMENSION_TAG) - 1)) {
-                if (strlen(path) > sizeof(LEVEL_DIMENSION_TAG) - 1) {
-                    newdim = strtol(path + sizeof(LEVEL_DIMENSION_TAG) - 1, NULL, 0);
-                    printf("entering new dimension %d\n", newdim);
+            if (!memcmp(dirp->d_name, LEVEL_DIMENSION_TAG, sizeof(LEVEL_DIMENSION_TAG) - 1)) {
+                if (strlen(dirp->d_name) > sizeof(LEVEL_DIMENSION_TAG) - 1) {
+                    newdim = strtol(dirp->d_name + sizeof(LEVEL_DIMENSION_TAG) - 1, NULL, 0);
                 } else {
                     printf("Possibly malformed dimension in directory \"%s\"", path);
                 }
             }
-            int ret = find_chunk_files(cm, newpath, newdim);
+            int ret = find_chunk_files(dm, newpath, newdim);
             free(newpath);
             if (ret) {
                 closedir(dir);
@@ -140,7 +139,7 @@ int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim) {
             //printf("found chunk (%d,%d)\n", x, y);
 
             struct chunkcoord c(x, z, dim);
-            ret = cm->add_new_chunk(c);
+            ret = dm->add_new_chunk(c);
             if (ret) {
                 printf("Warning: possible duplicate chunk found\n");
             }

@@ -31,15 +31,14 @@
 #include "coord.hpp"
 namespace cnbt {
 const char LEVEL_MAIN_FILE[] = "level.dat";
-const char LEVEL_DIMENSION_TAG[] = "DIM-";
 
-int find_chunk_files(struct chunkmanager *cm, const char *path, int32_t dim);
+int find_chunk_files(struct dimensionmanager *dm, const char *path, int32_t dim);
 // {{{ main level struct
 struct level {
     struct tag *root;
     char *path;
     char *levelfile;
-    struct chunkmanager manager;
+    struct dimensionmanager manager;
 
     level(const char *path, const char *levelfile = NULL);
     ~level();

@@ -35,9 +35,13 @@ enum {
     CHUNKS_MAX_LOADED = 4096,
 };
 
-typedef std::pair<struct chunkcoord, struct chunkinfo*> chunkmaptype;
+const char LEVEL_DIMENSION_TAG[] = "DIM-";
+
+struct chunkmanager;
+
 typedef std::map<struct chunkcoord, struct chunkinfo*> chunkmap;
 typedef std::deque<struct chunkcoord> chunklist;
+typedef std::map<int32_t, chunkmanager *> chunkmanagermap;
 
 int chunkcoord_to_filename(struct chunkcoord c, uint8_t *name, int len);
 // {{{ chunk struct
@@ -48,7 +52,7 @@ struct chunk {
     uint8_t blocklight[CHUNK_BLOCKLIGHT_LEN];
     uint8_t blocks[CHUNK_BLOCKS_LEN];
 
-    int32_t x, z;
+    int32_t x, z, d;
     int64_t timestamp;
 
     bool terrainpopulated;
@@ -67,15 +71,18 @@ struct chunkinfo {
     ~chunkinfo();
 };
 // }}}
+// chunkmanager completely ignores the dimension
+// however, comparison functions will still pay attention to it
 struct chunkmanager {
     chunkmap chunks;
     struct chunkcoord *max, *min;
-    chunkmap::iterator mapiterator;
+    int32_t dim;
     std::deque<struct chunkinfo*> loadedchunks;
     const char *path;
 
-    chunkmanager(const char *path);
+    chunkmanager(const char *path, int32_t dim);
     ~chunkmanager();
+
     bool chunk_exists(int32_t x, int32_t z);
     bool chunk_exists(struct chunkcoord c);
     struct chunkinfo *get_chunk(struct chunkcoord c);
@@ -87,6 +94,18 @@ struct chunkmanager {
     std::deque<chunklist *> *find_chunk_groups();
     int prune_chunks(chunklist *cl);
     int prune_chunks_on_disk(chunklist *cl);
+};
+
+struct dimensionmanager {
+    const char *path;
+    chunkmanagermap chunkmanagers;
+
+    dimensionmanager(const char *path);
+    ~dimensionmanager();
+
+    int add_new_chunk(struct chunkcoord c);
+    struct chunkmanager *add_new_chunk_manager(int32_t dim);
+    struct chunkmanager *get_chunk_manager(int32_t dim);
 };
 
 chunkcoord find_centroid(chunklist *cl);

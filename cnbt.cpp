@@ -210,7 +210,6 @@ int main(int argc, char **argv) {
         ERR(
 "usage: %s [-d dir] [-r rendertype] [-a] [-c colorfile] [-b originx originz areax areaz]\n"
 "              path/to/level output.png\n"
-"       %s -p\n"
 "By default, an angled view towards the NE is rendered\n"
 "\n"
 "-d: Valid dirs are: n ne e se s sw w nw\n"
@@ -218,12 +217,15 @@ int main(int argc, char **argv) {
 "-a: Alternate dark and light colors for horizontal planes\n"
 "        Has no effect when a color file is specified\n"
 "-c: Render the map with a custom color file\n"
-"-p: Prunes any unconnected chunks from a world.\n"
 "-b: Renders only the bounding box specified. Origin is the corner\n"
 "        to render from, area is the number of chunks in the x and z\n"
 "        direction. Area is an unsigned quantity, and the corner is\n"
 "        the \"bottom left\" corner\n"
-            , argv[0], argv[0]);
+"       %s -p\n"
+"Prunes any unconnected chunks from a world to save space.\n"
+"       %s -f file\n"
+"Prints out the raw NBT file structure of the given file.\n"
+            , argv[0], argv[0], argv[0]);
         exit(1);
     }
 
@@ -279,7 +281,8 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        cnbt::chunkmanager *cm = &l.manager;
+        cnbt::dimensionmanager *dm = &l.manager;
+        cnbt::chunkmanager *cm = dm->get_chunk_manager(0);
         std::deque<cnbt::chunklist*> *groups = cm->find_chunk_groups();
         if (!groups) {
             printf("No chunks in level\n");
@@ -309,6 +312,8 @@ int main(int argc, char **argv) {
 
             printf("THIS OPERATION CANNOT BE UNDONE\n");
             printf("ALWAYS MAKE A BACKUP BEFORE PRUNING\n");
+            printf("IF YOU HAVE USED PORTALS, YOU MAY HAVE EXPLORED AREAS\n");
+            printf("  THAT ARE UNCONNECTED\n");
             printf("Are you sure you want to delete %lu chunks?\n", sum);
             printf("Type \"yes\" to prune, or anything else to abort.\n");
 
@@ -366,7 +371,8 @@ int main(int argc, char **argv) {
             bc = cnbt::game::init_block_colors(alc);
         }
 
-        cnbt::chunkmanager *cm = &l.manager;
+        cnbt::dimensionmanager *dm = &l.manager;
+        cnbt::chunkmanager *cm = dm->get_chunk_manager(0); // main world
         cnbt::renderer *r = cnbt::get_renderer(cm, rt, dir, bc);
         uint8_t *image;
         cnbt::coord size;
