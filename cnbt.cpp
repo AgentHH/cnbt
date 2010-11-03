@@ -154,6 +154,16 @@ int parse_options(int argc, char **argv, char **world, char **out, char **colorf
                     return 1;
                 }
                 *dim = value;
+                switch (value) {
+                    case 0:
+                        printf("rendering standard world\n");
+                        break;
+                    case 1:
+                        printf("rendering the Nether\n");
+                        break;
+                    default:
+                        printf("rendering dimension %d\n", value);
+                }
             }
         } else if (!strcmp(argv[i], "-b")) {
             if (i + 4 >= argc) {
@@ -389,7 +399,7 @@ int main(int argc, char **argv) {
 
         cnbt::dimensionmanager *dm = &l.manager;
         cnbt::chunkmanager *cm = dm->get_chunk_manager(dim);
-        cnbt::renderer *r = cnbt::get_renderer(cm, rt, dir, bc);
+        cnbt::renderer *r = cnbt::get_renderer(cm, rt, dir, bc, dim);
         uint8_t *image;
         cnbt::coord size;
         printf("total bounding box is (%d, %d) to (%d, %d)\n", cm->max->x, cm->max->z, cm->min->x, cm->min->z);

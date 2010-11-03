@@ -81,24 +81,24 @@ cleanup_write_png_pcws:
     return 1;
 }
 // }}}
-struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, game::blockcolors *bc) {
+struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, game::blockcolors *bc, int32_t dim) {
     switch (rt) {
         case RENDER_TOP_DOWN:
-            return new topdownrenderer(cm, dir, bc);
+            return new topdownrenderer(cm, dir, bc, dim);
         case RENDER_OBLIQUE:
-            return new obliquerenderer(cm, dir, bc);
+            return new obliquerenderer(cm, dir, bc, dim);
         case RENDER_ANGLED:
-            return new angledrenderer(cm, dir, bc);
+            return new angledrenderer(cm, dir, bc, dim);
         default:
             return NULL;
     }
 }
 // {{{ oblique renderer
-int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offsetside, size_t *offsettop) {
+int oblique_blockcoord_to_image(coord chunk, coord area, coord imagesize, blockcoord block, uint8_t dir, size_t *offsetside, size_t *offsettop) {
     // x, z are chunk coordinates; 0,0 is the origin
     size_t x = chunk.first, z = chunk.second;
     // w, h are number of chunks in the x and z directions
-    size_t nx = dim.first, nz = dim.second;
+    size_t nx = area.first, nz = area.second;
     // pw, ph are the pixel widths and heights of the image buffer
     size_t pi = imagesize.first; //, pj = imagesize.second;
     // bx, by, bz are block x, y, and z
@@ -147,12 +147,12 @@ int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockco
     return 0;
 }
 
-void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc) {
+void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord area, coord imagesize, uint8_t dir, game::blockcolors *bc) {
     //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);
     // x and z are chunk coordinates, starting at 0,0 and going to w-1, h-1
     // w and h are the number of chunks along the x- and z-axis
     //size_t x = chunk.first, z = chunk.second;
-    //size_t w = dim.first, h = dim.second;
+    //size_t w = area.first, h = area.second;
     //size_t pi = imagesize.first, pj = imagesize.second;
 
     for (int _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
@@ -180,7 +180,7 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
                 }
 
                 size_t offsetside, offsettop;
-                oblique_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_b, _y, _a), dir, &offsetside, &offsettop);
+                oblique_blockcoord_to_image(chunk, area, imagesize, blockcoord(_b, _y, _a), dir, &offsetside, &offsettop);
                 uint8_t *destside = buf + offsetside * 3;
                 uint8_t *desttop = buf + offsettop * 3;
 
@@ -191,7 +191,7 @@ void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord
     }
 }
 
-obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc) : renderer(cm, RENDER_OBLIQUE, dir, bc) {
+obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc, int32_t dim) : renderer(cm, RENDER_OBLIQUE, dir, bc, dim) {
     switch (dir) {
         case DIR_NORTH:
         case DIR_EAST:
@@ -204,17 +204,17 @@ obliquerenderer::obliquerenderer(struct chunkmanager *cm, uint8_t dir, game::blo
     }
 }
 
-coord obliquerenderer::image_size(scoord origin, coord dim) {
+coord obliquerenderer::image_size(scoord origin, coord area) {
     // returned size is in pixels
     // for overhead, we don't have to think at all
     // just supply the width / height multiplied by 16
     switch (dir) {
         case DIR_NORTH:
         case DIR_SOUTH:
-            return coord(dim.second * BLOCKS_PER_Z, dim.first * BLOCKS_PER_X + BLOCKS_PER_Y);
+            return coord(area.second * BLOCKS_PER_Z, area.first * BLOCKS_PER_X + BLOCKS_PER_Y);
         case DIR_EAST:
         case DIR_WEST:
-            return coord(dim.first * BLOCKS_PER_X, dim.second * BLOCKS_PER_Z + BLOCKS_PER_Y);
+            return coord(area.first * BLOCKS_PER_X, area.second * BLOCKS_PER_Z + BLOCKS_PER_Y);
         default:
             return coord(0, 0);
     }
@@ -239,13 +239,13 @@ coord obliquerenderer::image_size() {
     }
 }
 
-uint8_t *obliquerenderer::render(scoord origin, coord dim) {
+uint8_t *obliquerenderer::render(scoord origin, coord area) {
     // x, z, w, h are all unmodified chunk coordinates
     int32_t x = origin.first, z = origin.second;
-    size_t nx = dim.first, nz = dim.second;
+    size_t nx = area.first, nz = area.second;
 
     // pi, pj are pixel widths and heights for the image
-    coord imagesize = image_size(origin, dim);
+    coord imagesize = image_size(origin, area);
     size_t pi = imagesize.first, pj = imagesize.second;
 
     printf("size of box is (%ld,%ld)\n", nx, nz);
@@ -277,14 +277,14 @@ uint8_t *obliquerenderer::render(scoord origin, coord dim) {
                 _a = nx - _x - 1;
                 _b = nz - _z - 1;
             }
-            struct chunkcoord c(_a + x, _b + z);
+            struct chunkcoord c(_a + x, _b + z, dim);
             if (cm->chunk_exists(c)) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
                 if (!ci) {
                     ERR("Warning: unable to load chunk (%d,%d)\n", c.x, c.z);
                 }
-                render_oblique(ci->c, image, coord(_a, _b), dim, imagesize, dir, bc);
+                render_oblique(ci->c, image, coord(_a, _b), area, imagesize, dir, bc);
             }
         }
     }
@@ -299,11 +299,11 @@ uint8_t *obliquerenderer::render_all() {
 }
 // }}}
 // {{{ top-down renderer
-int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset) {
+int top_down_blockcoord_to_image(coord chunk, coord area, coord imagesize, blockcoord block, uint8_t dir, size_t *offset) {
     // x, z are chunk coordinates; 0,0 is the origin
     size_t x = chunk.first, z = chunk.second;
     // w, h are number of chunks in the x and z directions
-    size_t nx = dim.first, nz = dim.second;
+    size_t nx = area.first, nz = area.second;
     // pw, ph are the pixel widths and heights of the image buffer
     size_t pi = imagesize.first; //, pj = imagesize.second;
     // bx, bz are block x and y
@@ -348,18 +348,18 @@ int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockc
     return 0;
 }
 
-void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc) {
+void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord area, coord imagesize, uint8_t dir, game::blockcolors *bc) {
     //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);
     // x and z are chunk coordinates, starting at 0,0 and going to w-1, h-1
     // w and h are the number of chunks along the x- and z-axis
     //size_t x = chunk.first, z = chunk.second;
-    //size_t w = dim.first, h = dim.second;
+    //size_t w = area.first, h = area.second;
     //size_t pi = imagesize.first, pj = imagesize.second;
 
     for (int _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
         for (int _z = 0; _z < BLOCKS_PER_Z; _z++) { // 16 blocks in the z-dir
             size_t offset;
-            top_down_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_x, 0, _z), dir, &offset);
+            top_down_blockcoord_to_image(chunk, area, imagesize, blockcoord(_x, 0, _z), dir, &offset);
             uint8_t *dest = buf + offset * 3;
             for (int _y = 0; _y < 128; _y++) {
                 uint8_t id = c->blocks[_x * 2048 + _z * 128 + _y];
@@ -379,7 +379,7 @@ void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coor
     }
 }
 
-topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc) : renderer(cm, RENDER_TOP_DOWN, dir, bc) {
+topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc, int32_t dim) : renderer(cm, RENDER_TOP_DOWN, dir, bc, dim) {
     switch (dir) {
         case DIR_NORTH:
         case DIR_EAST:
@@ -392,17 +392,17 @@ topdownrenderer::topdownrenderer(struct chunkmanager *cm, uint8_t dir, game::blo
     }
 }
 
-coord topdownrenderer::image_size(scoord origin, coord dim) {
+coord topdownrenderer::image_size(scoord origin, coord area) {
     // returned size is in pixels
     // for overhead, we don't have to think at all
     // just supply the width / height multiplied by 16
     switch (dir) {
         case DIR_NORTH:
         case DIR_SOUTH:
-            return coord(dim.second * BLOCKS_PER_Z, dim.first * BLOCKS_PER_X);
+            return coord(area.second * BLOCKS_PER_Z, area.first * BLOCKS_PER_X);
         case DIR_EAST:
         case DIR_WEST:
-            return coord(dim.first * BLOCKS_PER_X, dim.second * BLOCKS_PER_Z);
+            return coord(area.first * BLOCKS_PER_X, area.second * BLOCKS_PER_Z);
         default:
             return coord(0, 0);
     }
@@ -427,13 +427,13 @@ coord topdownrenderer::image_size() {
     }
 }
 
-uint8_t *topdownrenderer::render(scoord origin, coord dim) {
+uint8_t *topdownrenderer::render(scoord origin, coord area) {
     // x, z, w, h are all unmodified chunk coordinates
     int32_t x = origin.first, z = origin.second;
-    size_t nx = dim.first, nz = dim.second;
+    size_t nx = area.first, nz = area.second;
 
     // pi, pj are pixel widths and heights for the image
-    coord imagesize = image_size(origin, dim);
+    coord imagesize = image_size(origin, area);
     size_t pi = imagesize.first, pj = imagesize.second;
 
     printf("size of box is (%ld,%ld)\n", nx, nz);
@@ -457,7 +457,7 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
     // _x, _z are 0-based chunk coordinates
     for (size_t _z = 0; _z < nz; _z++) {
         for (size_t _x = 0; _x < nx; _x++) {
-            struct chunkcoord c(_x + x, _z + z);
+            struct chunkcoord c(_x + x, _z + z, dim);
             if (cm->chunk_exists(c)) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
@@ -465,7 +465,7 @@ uint8_t *topdownrenderer::render(scoord origin, coord dim) {
                     ERR("Warning: unable to load chunk (%d,%d)\n", c.x, c.z);
                     continue;
                 }
-                render_top_down(ci->c, image, coord(_x, _z), dim, imagesize, dir, bc);
+                render_top_down(ci->c, image, coord(_x, _z), area, imagesize, dir, bc);
             }
         }
     }
@@ -480,11 +480,11 @@ uint8_t *topdownrenderer::render_all() {
 }
 // }}}
 // {{{ angled renderer
-int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offsettop, size_t *offsetside) {
+int angled_blockcoord_to_image(coord chunk, coord area, coord imagesize, blockcoord block, uint8_t dir, size_t *offsettop, size_t *offsetside) {
     // x, z are chunk coordinates; 0,0 is the origin
     size_t x = chunk.first, z = chunk.second;
     // w, h are number of chunks in the x and z directions
-    size_t nx = dim.first, nz = dim.second;
+    size_t nx = area.first, nz = area.second;
     // pw, ph are the pixel widths and heights of the image buffer
     size_t pi = imagesize.first; //, pj = imagesize.second;
     // bx, by, bz are block x, y, and z
@@ -545,12 +545,12 @@ inline void color_angled_pixels(uint8_t *buf, size_t offset, coord imagesize, ui
     game::color_add_above(dest + 3, color);
 }
 
-void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc) {
+void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord area, coord imagesize, uint8_t dir, game::blockcolors *bc) {
     //printf("looking at chunk %d, %d (%d, %d) %p %p\n", x, z, w, h, c, buf);
     // x and z are chunk coordinates, starting at 0,0 and going to w-1, h-1
     // w and h are the number of chunks along the x- and z-axis
     //size_t x = chunk.first, z = chunk.second;
-    //size_t w = dim.first, h = dim.second;
+    //size_t w = area.first, h = area.second;
     //size_t pi = imagesize.first, pj = imagesize.second;
 
     for (uint8_t _x = 0; _x < BLOCKS_PER_X; _x++) { // 16 blocks in the x-dir
@@ -589,7 +589,7 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
                 }
 
                 size_t offsetside, offsettop;
-                angled_blockcoord_to_image(chunk, dim, imagesize, blockcoord(_a, _y, _b), dir, &offsettop, &offsetside);
+                angled_blockcoord_to_image(chunk, area, imagesize, blockcoord(_a, _y, _b), dir, &offsettop, &offsetside);
                 color_angled_pixels(buf, offsettop, imagesize, &b->topcolor[_y * 4]);
                 color_angled_pixels(buf, offsetside, imagesize, &b->sidecolor[_y * 4]);
             }
@@ -597,7 +597,7 @@ void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord 
     }
 }
 
-angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc) : renderer(cm, RENDER_ANGLED, dir, bc) {
+angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc, int32_t dim) : renderer(cm, RENDER_ANGLED, dir, bc, dim) {
     switch (dir) {
         case DIR_NORTHEAST:
         case DIR_SOUTHEAST:
@@ -610,11 +610,11 @@ angledrenderer::angledrenderer(struct chunkmanager *cm, uint8_t dir, game::block
     }
 }
 
-coord angledrenderer::image_size(scoord origin, coord dim) {
+coord angledrenderer::image_size(scoord origin, coord area) {
     // returned size is in pixels
     // the current algorithm will leave a lot of wasted space
-    size_t x = dim.first * BLOCKS_PER_X;
-    size_t z = dim.second * BLOCKS_PER_Z;
+    size_t x = area.first * BLOCKS_PER_X;
+    size_t z = area.second * BLOCKS_PER_Z;
     switch (dir) {
         case DIR_NORTHEAST:
         case DIR_SOUTHWEST:
@@ -645,13 +645,13 @@ coord angledrenderer::image_size() {
     }
 }
 
-uint8_t *angledrenderer::render(scoord origin, coord dim) {
+uint8_t *angledrenderer::render(scoord origin, coord area) {
     // x, z, w, h are all unmodified chunk coordinates
     int32_t x = origin.first, z = origin.second;
-    size_t nx = dim.first, nz = dim.second;
+    size_t nx = area.first, nz = area.second;
 
     // pi, pj are pixel widths and heights for the image
-    coord imagesize = image_size(origin, dim);
+    coord imagesize = image_size(origin, area);
     size_t pi = imagesize.first, pj = imagesize.second;
 
     if (pi == 0 || pj == 0) {
@@ -702,15 +702,15 @@ uint8_t *angledrenderer::render(scoord origin, coord dim) {
                     free(image);
                     return NULL;
             }
-            struct chunkcoord c(_a + x, _b + z);
+            struct chunkcoord c(_a + x, _b + z, dim);
             if (cm->chunk_exists(c)) {
                 //printf("%lu, %lu -> %d, %d\n", _x, _z, c.x, c.z);
                 struct chunkinfo *ci = cm->get_chunk(c);
                 if (!ci) {
-                    ERR("Warning: unable to load chunk (%d,%d)\n", c.x, c.z);
+                    ERR("Warning: unable to load chunk (%d,%d|%d)\n", c.x, c.z, c.d);
                     continue;
                 }
-                render_angled(ci->c, image, coord(_a, _b), dim, imagesize, dir, bc);
+                render_angled(ci->c, image, coord(_a, _b), area, imagesize, dir, bc);
             }
         }
     }

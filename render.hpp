@@ -48,56 +48,57 @@ enum rendertype {
 
 int write_png_to_file(uint8_t *buf, size_t w, size_t h, const char *filename);
 
-int oblique_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
-void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc);
+int oblique_blockcoord_to_image(coord chunk, coord area, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
+void render_oblique(struct chunk *c, uint8_t *buf, coord chunk, coord area, coord imagesize, uint8_t dir, game::blockcolors *bc);
 
-int top_down_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
-void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc);
+int top_down_blockcoord_to_image(coord chunk, coord area, coord imagesize, blockcoord block, uint8_t dir, size_t *offset);
+void render_top_down(struct chunk *c, uint8_t *buf, coord chunk, coord area, coord imagesize, uint8_t dir, game::blockcolors *bc);
 
-int angled_blockcoord_to_image(coord chunk, coord dim, coord imagesize, blockcoord block, uint8_t dir, size_t *offset, game::blockcolors *bc);
-void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord dim, coord imagesize, uint8_t dir, game::blockcolors *bc);
+int angled_blockcoord_to_image(coord chunk, coord area, coord imagesize, blockcoord block, uint8_t dir, size_t *offset, game::blockcolors *bc);
+void render_angled(struct chunk *c, uint8_t *buf, coord chunk, coord area, coord imagesize, uint8_t dir, game::blockcolors *bc);
 
 struct renderer {
     struct chunkmanager *cm;
     rendertype rt;
     uint8_t dir; // 0 is north, increases in clockwise direction
     game::blockcolors *bc;
+    int32_t dim;
 
-    renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, game::blockcolors *bc) : cm(cm), rt(rt), dir(dir), bc(bc) {}
+    renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, game::blockcolors *bc, int32_t dim) : cm(cm), rt(rt), dir(dir), bc(bc), dim(dim) {}
 
-    virtual coord image_size(scoord origin, coord dim) = 0;
+    virtual coord image_size(scoord origin, coord area) = 0;
     virtual coord image_size() = 0;
-    virtual uint8_t *render(scoord origin, coord dim) = 0;
+    virtual uint8_t *render(scoord origin, coord area) = 0;
     virtual uint8_t *render_all() = 0;
 };
 
 struct obliquerenderer : renderer {
-    obliquerenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc);
+    obliquerenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc, int32_t dim);
 
-    virtual coord image_size(scoord origin, coord dim);
+    virtual coord image_size(scoord origin, coord area);
     virtual coord image_size();
-    virtual uint8_t *render(scoord origin, coord dim);
+    virtual uint8_t *render(scoord origin, coord area);
     virtual uint8_t *render_all();
 };
 
 struct topdownrenderer : renderer {
-    topdownrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc);
+    topdownrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc, int32_t dim);
 
-    virtual coord image_size(scoord origin, coord dim);
+    virtual coord image_size(scoord origin, coord area);
     virtual coord image_size();
-    virtual uint8_t *render(scoord origin, coord dim);
+    virtual uint8_t *render(scoord origin, coord area);
     virtual uint8_t *render_all();
 };
 
 struct angledrenderer : renderer {
-    angledrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc);
+    angledrenderer(struct chunkmanager *cm, uint8_t dir, game::blockcolors *bc, int32_t dim);
 
-    virtual coord image_size(scoord origin, coord dim);
+    virtual coord image_size(scoord origin, coord area);
     virtual coord image_size();
-    virtual uint8_t *render(scoord origin, coord dim);
+    virtual uint8_t *render(scoord origin, coord area);
     virtual uint8_t *render_all();
 };
 
-struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, game::blockcolors *bc);
+struct renderer *get_renderer(struct chunkmanager *cm, rendertype rt, uint8_t dir, game::blockcolors *bc, int32_t dim);
 
 } // end namespace cnbt
